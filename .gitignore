@@ -37,3 +37,9 @@ Thumbs.db
 
 # logs
 *.log
+
+# sqlite database — root only, or it swallows server/data/ too
+/data/
+*.db
+*.db-wal
+*.db-shm
