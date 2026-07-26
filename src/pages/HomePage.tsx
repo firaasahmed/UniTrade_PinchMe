@@ -142,13 +142,6 @@ const KIND_PATH: Record<ListingKind, string> = {
   accommodation: "/accommodation",
 };
 
-// each panel does both halves of the journey: find one, or list your own
-const SELL_LABEL: Record<ListingKind, string> = {
-  item: "Sell an item",
-  service: "Offer a service",
-  accommodation: "List a room",
-};
-
 function PathwayCard({ pathway }: { pathway: Pathway }) {
   const navigate = useNavigate();
   const Icon = pathway.icon;
@@ -176,12 +169,6 @@ function PathwayCard({ pathway }: { pathway: Pathway }) {
             </Link>
           </Button>
         </div>
-        <Link
-          to={`/sell/new?kind=${pathway.kind}`}
-          className="mt-3 text-center text-xs font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-        >
-          {SELL_LABEL[pathway.kind]} →
-        </Link>
       </div>
     </div>
   );
