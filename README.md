@@ -2,8 +2,8 @@
 
 ### ▶ Live demo — **https://unitrade-44tt.onrender.com**
 
-Sign in with **`priya.s@uon.edu.au`** / **`student123!`** and you are a verified
-student. Payments are live in Pinch test mode — card `4242 4242 4242 4242`.
+Sign in with **`admin@pinch.edu.au`** / **`admin`** and you are a verified student.
+Payments are live in Pinch test mode — card `4242 4242 4242 4242`.
 
 > Hosted on a free instance, so if nobody has visited for a while the first
 > request wakes it up and takes about a minute. Give it one reload.
@@ -41,7 +41,7 @@ npm run dev:all
 Then open **http://localhost:5173**.
 
 That is the whole setup. The database is created and seeded automatically on
-first run (22 listings, 20 accounts across 13 universities, including university
+first run (22 listings, 20 accounts across 14 universities, including university
 housing and agency accounts) — there is nothing to migrate and no service to
 sign up for.
 
@@ -79,14 +79,14 @@ at http://localhost:3001/api/health (`"payments": true`).
 ## The 90-second walkthrough
 
 Accounts are real: bcrypt-hashed passwords and a JWT bearer token. Every seeded
-account uses the password **`student123!`**.
+account uses the password **`admin`**.
 
-1. Sign in as a buyer: **`priya.s@uon.edu.au`** / **`student123!`**.
+1. Sign in as a buyer: **`admin@pinch.edu.au`** / **`admin`**.
 2. Open **Items → "Laptop, great for uni work"** ($620).
 3. Hit **Make a deal** and offer something under asking, say **$520**.
 4. You land in Messages, where the offer sits in the thread.
 5. Open a private window and sign in as the seller,
-   **`aiko.t@student.unsw.edu.au`** / **`student123!`**. Accept or counter the
+   **`aiko.t@student.unsw.edu.au`** / **`admin`**. Accept or counter the
    offer there — both sides can move the number until the money lands.
 6. Back as the buyer, press **Pay**. That hands you to Pinch's hosted checkout;
    card **`4242 4242 4242 4242`**, any future expiry, any CVC.
@@ -94,8 +94,8 @@ account uses the password **`student123!`**.
    listing is marked sold.
 
 Prefer your own account? Any recognised Australian university domain works
-(`@uon.edu.au`, `@student.unsw.edu.au`, `@sydney.edu.au`, …). Passwords need 8
-characters, a number and a symbol.
+(`@pinch.edu.au`, `@uon.edu.au`, `@student.unsw.edu.au`, `@sydney.edu.au`, …).
+Passwords need 8 characters, a number and a symbol.
 
 ### Forcing a failure
 
@@ -223,6 +223,7 @@ Two things to know about a hosted demo:
   the same 22 listings every time — but anything a visitor creates is temporary.
   Attach a persistent disk, or move to Postgres behind the same `Repository`
   interface, for anything longer-lived.
-- **The seeded accounts share a published password.** That is deliberate so
-  reviewers can sign in, but it means anyone can act as those students. Don't
-  put real data behind them.
+- **The seeded accounts share a published password** (`admin`). That is
+  deliberate so reviewers can sign in without being handed credentials, but it
+  means anyone can act as those accounts — including `admin@pinch.edu.au`, which
+  can edit any listing. Don't put real data behind them.

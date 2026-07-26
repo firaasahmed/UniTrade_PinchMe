@@ -2,6 +2,7 @@ import type { University } from "../../../src/types/University.ts";
 
 // fixed seed — real australian universities, stable ids
 export const seedUniversities: University[] = [
+  { id: "pinch", name: "Pinch University", emailDomains: ["pinch.edu.au"], city: "Sydney", state: "NSW", lat: -33.8688, lng: 151.2093 },
   { id: "uon", name: "University of Newcastle", emailDomains: ["uon.edu.au", "newcastle.edu.au"], city: "Newcastle", state: "NSW", lat: -32.8926, lng: 151.7057 },
   { id: "usyd", name: "University of Sydney", emailDomains: ["sydney.edu.au", "uni.sydney.edu.au"], city: "Sydney", state: "NSW", lat: -33.8886, lng: 151.1873 },
   { id: "unsw", name: "UNSW Sydney", emailDomains: ["unsw.edu.au", "student.unsw.edu.au", "ad.unsw.edu.au"], city: "Sydney", state: "NSW", lat: -33.9173, lng: 151.2313 },
