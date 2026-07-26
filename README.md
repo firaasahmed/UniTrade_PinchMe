@@ -184,3 +184,33 @@ Set `JWT_SECRET` in `.env` to sign tokens with your own secret.
 - **`node:sqlite` not found** — you are on Node older than 22.5.
 - **Payment button does nothing** — no Pinch keys; check
   http://localhost:3001/api/health.
+
+---
+
+## Deploying it
+
+The server serves the built frontend, so it runs as **one service on one origin** —
+no separate static host and no CORS to configure.
+
+```bash
+npm run build && npm start
+```
+
+`render.yaml` is checked in, so on [Render](https://render.com) it is
+*New → Blueprint → pick this repo*. It builds, generates a `JWT_SECRET`, and
+health-checks `/api/health`. Add your Pinch keys in the dashboard to switch
+checkout on. Railway and Fly work the same way with `npm run build` / `npm start`.
+
+In production the server **refuses to start** without a `JWT_SECRET` of at least
+16 characters — a predictable secret would let anyone forge a session.
+
+Two things to know about a hosted demo:
+
+- **The database is a SQLite file.** On a host with an ephemeral disk it resets
+  to the seed on every restart and redeploy, which is fine for a demo — you get
+  the same 22 listings every time — but anything a visitor creates is temporary.
+  Attach a persistent disk, or move to Postgres behind the same `Repository`
+  interface, for anything longer-lived.
+- **The seeded accounts share a published password.** That is deliberate so
+  reviewers can sign in, but it means anyone can act as those students. Don't
+  put real data behind them.

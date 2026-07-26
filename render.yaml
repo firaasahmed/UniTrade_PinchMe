@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: unitrade
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # generated once by render, so sessions survive restarts
+      - key: JWT_SECRET
+        generateValue: true
+      # add your Pinch test keys in the dashboard to switch checkout on
+      - key: PINCH_APP_ID
+        sync: false
+      - key: PINCH_SECRET
+        sync: false
+      - key: VITE_PINCH_PUBLISHABLE_KEY
+        sync: false
