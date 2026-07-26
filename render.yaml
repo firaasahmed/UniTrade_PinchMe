@@ -3,12 +3,17 @@ services:
     name: unitrade
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build
+    # NODE_ENV=production makes npm skip devDependencies, and the build tools
+    # (vite, tsc, the react plugin) all live there — so ask for them explicitly
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      # pin the major we build and test against rather than taking newest
+      - key: NODE_VERSION
+        value: "24"
       # generated once by render, so sessions survive restarts
       - key: JWT_SECRET
         generateValue: true
