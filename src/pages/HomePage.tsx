@@ -153,7 +153,7 @@ function PathwayCard({ pathway }: { pathway: Pathway }) {
   const navigate = useNavigate();
   const Icon = pathway.icon;
   return (
-    <div className="overflow-hidden rounded-2xl bg-card shadow-lg select-none cursor-default">
+    <div className="overflow-hidden rounded-2xl bg-card shadow-lg">
       <div className="flex h-full flex-col p-5 pb-4">
         <div className={cn("flex size-10 items-center justify-center rounded-xl", pathway.chip)}>
           <Icon className="size-5" />

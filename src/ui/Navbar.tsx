@@ -194,7 +194,7 @@ function BrowseMenu({ active }: { active: boolean }) {
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/buy">Everything at once</Link>
+          <Link to="/buy">Browse all</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
