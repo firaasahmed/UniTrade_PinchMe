@@ -1,5 +1,17 @@
 # UniTrade
 
+### ▶ Live demo — **https://unitrade-44tt.onrender.com**
+
+Sign in with **`priya.s@uon.edu.au`** / **`student123!`** and you are a verified
+student. Payments are live in Pinch test mode — card `4242 4242 4242 4242`.
+
+> Hosted on a free instance, so if nobody has visited for a while the first
+> request wakes it up and takes about a minute. Give it one reload.
+
+Nothing to install to try it. To run it yourself, see [Run it](#run-it) below.
+
+---
+
 A student-to-student marketplace for Australian universities, built for the
 **Pinch Me! I Want 50K** hackathon.
 
