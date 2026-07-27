@@ -25,7 +25,8 @@ export function CategoryCard({
       )}
     >
       <Icon className="size-6 shrink-0" />
-      <span className="w-full text-sm leading-tight break-words hyphens-auto">{label}</span>
+      {/* smaller on narrow phones so long words like "accommodation" still fit whole */}
+      <span className="w-full text-xs leading-tight break-words sm:text-sm">{label}</span>
       {sub && (
         <span className="w-full text-xs font-normal break-words text-muted-foreground">{sub}</span>
       )}
