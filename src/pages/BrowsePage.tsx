@@ -86,9 +86,10 @@ export function BrowsePage({ kind }: { kind: ListingKind }) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b pb-4">
+      {/* stacked on phones — sharing the row squeezes the provider cards to nothing */}
+      <div className="mb-5 flex flex-col items-start gap-3 border-b pb-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         {providers ? (
-          <div className="min-w-0 flex-1">
+          <div className="w-full min-w-0 sm:flex-1">
             <ProviderNav providers={providers} filters={filters} onChange={patch} />
           </div>
         ) : (

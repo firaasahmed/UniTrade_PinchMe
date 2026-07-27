@@ -24,9 +24,11 @@ export function CategoryCard({
         active && "border-primary bg-primary/5 font-semibold text-primary ring-1 ring-primary/30",
       )}
     >
-      <Icon className="size-6" />
-      <span className="text-sm leading-tight">{label}</span>
-      {sub && <span className="text-xs font-normal text-muted-foreground">{sub}</span>}
+      <Icon className="size-6 shrink-0" />
+      <span className="w-full text-sm leading-tight break-words hyphens-auto">{label}</span>
+      {sub && (
+        <span className="w-full text-xs font-normal break-words text-muted-foreground">{sub}</span>
+      )}
     </button>
   );
 }
