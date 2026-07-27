@@ -15,7 +15,8 @@ export type Crumb = { label: string; to?: string };
 // separators are siblings of items (not nested) to keep valid <ol>/<li> structure
 export function Breadcrumbs({ items }: { items: Crumb[] }) {
   return (
-    <Breadcrumb className="mb-4">
+    // long trails eat the top of a phone screen, and back covers it there
+    <Breadcrumb className="mb-4 hidden sm:block">
       <BreadcrumbList>
         {items.map((item, i) => {
           const last = i === items.length - 1;

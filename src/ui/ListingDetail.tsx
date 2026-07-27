@@ -209,7 +209,7 @@ function Loaded({ listing }: { listing: Listing }) {
                     <Button size="lg" className="w-full text-base font-semibold" disabled={!available}>
                       <Handshake className="size-4" />
                       {available
-                        ? "Make a deal"
+                        ? journey.cta
                         : listing.status === "sold"
                           ? "Sold"
                           : "Unavailable"}
