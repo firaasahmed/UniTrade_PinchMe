@@ -7,6 +7,8 @@ import { useSession } from "@/session/SessionContext";
 import { HorizontalListingScroll } from "@/ui/HorizontalListingScroll";
 import { ItemCategoriesModal } from "@/ui/ItemCategoriesModal";
 import { Reveal } from "@/ui/Reveal";
+import { PinchHeroPanel } from "@/ui/home/PinchShowcase";
+import { WhyNow } from "@/ui/home/WhyNow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,6 +52,7 @@ export function HomePage() {
       <UniMarquee />
       <CategoryShowcase />
       <HowItWorks />
+      <WhyNow />
 
       <div className="mx-auto max-w-7xl px-4 pt-4 pb-6">
         <Reveal className="mb-6 flex items-end justify-between gap-3">
@@ -73,7 +76,10 @@ export function HomePage() {
         {state.status === "error" && (
           <p className="text-destructive">Couldn't load listings: {state.message}</p>
         )}
-        {state.status === "loaded" && <Rows listings={state.listings} />}
+        {state.status === "loaded" && (
+          <>            <Rows listings={state.listings} />
+          </>
+        )}
       </div>
 
       <DealsBanner />
@@ -83,12 +89,6 @@ export function HomePage() {
 }
 
 /* ------------------------------ hero ------------------------------ */
-
-const HERO_SHOTS = [
-  { src: "/listings/room-balcony.jpg", alt: "Room with a balcony", label: "Rooms near campus" },
-  { src: "/listings/laptop-1.jpg", alt: "Laptop for sale", label: "Laptops & tech" },
-  { src: "/listings/tutoring-1.jpg", alt: "Tutoring session", label: "Tutoring & services" },
-];
 
 const STATS = [
   { value: "100%", label: "verified students" },
@@ -108,7 +108,6 @@ function Hero() {
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-nav-from to-nav-to text-primary-foreground">
-      {/* atmosphere: soft colour glows + faint dot grid */}
       <div className="pointer-events-none absolute -top-32 -left-32 size-[30rem] rounded-full bg-gold/15 blur-3xl" />
       <div className="pointer-events-none absolute top-1/3 -right-32 size-[30rem] rounded-full bg-verified/15 blur-3xl" />
       <div
@@ -119,14 +118,14 @@ function Hero() {
         }}
       />
 
-      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 pt-16 pb-16 sm:pt-24 sm:pb-20 lg:grid-cols-[1.1fr_minmax(0,26rem)] lg:items-center lg:gap-20">
-        <div className="max-w-2xl">
+      <div className="relative mx-auto grid max-w-[90rem] grid-cols-1 items-center gap-12 px-6 pt-14 pb-16 sm:px-8 sm:pt-20 sm:pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,40rem)] lg:gap-14 xl:gap-16">
+        <div className="min-w-0 max-w-xl lg:max-w-none">
           <span className="inline-flex animate-in fade-in slide-in-from-bottom-3 items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-gold duration-700">
             <GraduationCap className="size-3.5" />
             The marketplace for Australian uni students
           </span>
 
-          <h1 className="mt-6 animate-in fade-in slide-in-from-bottom-4 font-heading text-4xl font-extrabold leading-[1.08] tracking-tight duration-700 sm:text-6xl">
+          <h1 className="mt-6 animate-in fade-in slide-in-from-bottom-4 font-heading text-4xl font-extrabold leading-[1.1] tracking-tight duration-700 sm:text-5xl lg:text-[2.75rem] xl:text-5xl 2xl:text-6xl">
             Everything you need
             <br />
             for uni life,{" "}
@@ -135,7 +134,7 @@ function Hero() {
             </span>
           </h1>
 
-          <p className="mt-5 max-w-xl animate-in fade-in slide-in-from-bottom-4 text-base leading-relaxed text-primary-foreground/70 duration-1000 sm:text-lg">
+          <p className="mt-5 max-w-lg animate-in fade-in slide-in-from-bottom-4 text-base leading-relaxed text-primary-foreground/70 duration-1000 sm:text-lg">
             Rooms, textbooks, laptops and a hand moving in. Every account is a
             verified student and every payment is protected — no strangers, no
             cash, no bond scams.
@@ -176,29 +175,12 @@ function Hero() {
           </div>
         </div>
 
-        {/* photo stack — desktop only, stays inside its own column */}
-        <div className="relative hidden h-[27rem] animate-in fade-in zoom-in-95 duration-1000 lg:block" aria-hidden>
-          {HERO_SHOTS.map((shot, i) => (
-            <figure
-              key={shot.src}
-              className={cn(
-                "absolute w-60 overflow-hidden rounded-2xl bg-card shadow-2xl shadow-black/40 ring-1 ring-primary-foreground/15 transition-transform duration-300 hover:z-10 hover:scale-105 hover:rotate-0",
-                i === 0 && "left-0 top-2 -rotate-3",
-                i === 1 && "right-0 top-28 rotate-2",
-                i === 2 && "left-14 bottom-0 -rotate-2",
-              )}
-            >
-              <img src={shot.src} alt={shot.alt} className="aspect-[4/3] w-full object-cover" />
-              <figcaption className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-foreground">
-                <BadgeCheck className="size-3.5 text-verified" />
-                {shot.label}
-              </figcaption>
-            </figure>
-          ))}
+        {/* Pinch demo — own grid track so headline can't spill over it */}
+        <div className="relative min-w-0 pb-6 lg:pb-4">
+          <PinchHeroPanel />
         </div>
       </div>
 
-      {/* stats band anchoring the hero */}
       <div className="relative border-t border-primary-foreground/10 bg-primary-foreground/[0.04]">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px px-4 py-6 sm:grid-cols-4">
           {STATS.map((s) => (
