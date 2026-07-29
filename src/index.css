@@ -6,9 +6,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
 @theme inline {
     --font-heading: 'Plus Jakarta Sans Variable', 'Geist Variable', sans-serif;
     --font-sans: 'Geist Variable', sans-serif;
+    --animate-marquee: marquee 40s linear infinite;
     /* unitrade brand tokens */
     --color-nav-from: var(--nav-from);
     --color-nav-to: var(--nav-to);
