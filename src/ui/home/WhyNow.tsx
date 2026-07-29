@@ -32,7 +32,7 @@ const BEATS: Beat[] = [
     icon: Banknote,
   },
   {
-    title: "Verified + Pinch",
+    title: "Verified UniTrade",
     body: "Uni emails, agreed deals, card payments that stick.",
     icon: ShieldCheck,
     highlight: true,
@@ -94,7 +94,7 @@ export function WhyNow() {
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-primary-foreground/70 sm:text-base">
           Thousands of international students leave selling exactly what the next
           intake needs. That trade still happens on open platforms and in cash.
-          UniTrade puts it behind verified accounts and Pinch.
+          UniTrade puts it behind verified accounts and a real payment trail.
         </p>
 
         <div className="relative mx-auto mt-14 max-w-4xl">
@@ -154,11 +154,11 @@ export function WhyNow() {
 
         <blockquote className="mx-auto mt-16 max-w-3xl font-heading text-xl font-bold tracking-tight sm:text-2xl lg:text-3xl">
           UniTrade is where the deal lives: verified students, agreed in chat,{" "}
-          <span className="text-gold">paid through Pinch.</span>
+          <span className="text-gold">paid safely.</span>
         </blockquote>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm text-primary-foreground/65">
-          <span>Campus trade with a payment trail. Powered by</span>
+          <span>By students, for students. Payments by</span>
           <span className="rounded-md bg-primary-foreground px-1.5 py-0.5">
             <PinchLogo height={15} />
           </span>
