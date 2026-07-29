@@ -9,7 +9,8 @@ export const SEED_PASSWORD_HASH = "$2b$10$kaBupPzAjwf2awDLNWs1iulpTnzG2eXUvmapT0
 // fixed seed — the admin test account plus students across several universities
 export const seedUsers: User[] = [
   { id: "usr1", name: "Admin", email: "admin@pinch.edu.au", universityId: "pinch", role: "admin", verified: true, location: "Sydney, NSW", lat: -33.8688, lng: 151.2093, createdAt: "2026-06-01T09:00:00.000Z" },
-  { id: "usr2", name: "Priya S.", email: "priya.s@uon.edu.au", universityId: "uon", role: "student", verified: true, location: "Callaghan, NSW", lat: -32.8926, lng: 151.7057, createdAt: "2026-06-02T09:00:00.000Z" },
+  // priya is wrapping up her degree — her profile runs as a moving-out sale
+  { id: "usr2", name: "Priya S.", email: "priya.s@uon.edu.au", universityId: "uon", role: "student", verified: true, movingOut: true, location: "Callaghan, NSW", lat: -32.8926, lng: 151.7057, createdAt: "2026-06-02T09:00:00.000Z" },
   { id: "usr3", name: "Daniel K.", email: "daniel.k@uon.edu.au", universityId: "uon", role: "student", verified: true, location: "Callaghan, NSW", lat: -32.8926, lng: 151.7057, createdAt: "2026-06-03T09:00:00.000Z" },
   { id: "usr4", name: "Marco L.", email: "marco.l@newcastle.edu.au", universityId: "uon", role: "student", verified: true, location: "Newcastle, NSW", lat: -32.9283, lng: 151.7817, createdAt: "2026-06-04T09:00:00.000Z" },
   { id: "usr5", name: "Aiko T.", email: "aiko.t@student.unsw.edu.au", universityId: "unsw", role: "student", verified: true, location: "Kensington, NSW", lat: -33.9173, lng: 151.2313, createdAt: "2026-06-05T09:00:00.000Z" },

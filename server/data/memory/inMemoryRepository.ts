@@ -91,6 +91,7 @@ export function createInMemoryRepository(seed: SeedData, clock: Clock = systemCl
       if (!user) return undefined;
       if (patch.name !== undefined) user.name = patch.name;
       if (patch.location !== undefined) user.location = patch.location;
+      if (patch.movingOut !== undefined) user.movingOut = patch.movingOut;
       return user;
     },
 
@@ -266,6 +267,7 @@ export function createInMemoryRepository(seed: SeedData, clock: Clock = systemCl
         proposedBy,
         status: "pending",
         paidAt: null,
+        bundleListingIds: input.bundleListingIds,
         createdAt: now,
         updatedAt: now,
       };

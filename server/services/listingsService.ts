@@ -13,6 +13,7 @@ export function publicUser(sellerId: string): PublicUser {
     university,
     verified: user?.verified ?? false,
     orgType: user?.orgType,
+    movingOut: user?.movingOut ?? false,
   };
 }
 

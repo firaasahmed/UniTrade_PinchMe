@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ShieldCheck, Loader2, PlaneTakeoff } from "lucide-react";
 
 export function AccountPage() {
   return (
@@ -23,11 +24,15 @@ function Inner() {
 
   const [name, setName] = useState(user?.name ?? "");
   const [location, setLocation] = useState(user?.location ?? "");
+  const [movingOut, setMovingOut] = useState(user?.movingOut ?? false);
   const [busy, setBusy] = useState(false);
 
   if (!user) return null;
 
-  const dirty = name.trim() !== user.name || location.trim() !== user.location;
+  const dirty =
+    name.trim() !== user.name ||
+    location.trim() !== user.location ||
+    movingOut !== (user.movingOut ?? false);
 
   async function save() {
     if (!name.trim()) {
@@ -36,7 +41,7 @@ function Inner() {
     }
     setBusy(true);
     try {
-      await updateUser({ name: name.trim(), location: location.trim() });
+      await updateUser({ name: name.trim(), location: location.trim(), movingOut });
       toast.success("Profile updated");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "couldn't save");
@@ -63,6 +68,20 @@ function Inner() {
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Suburb, State"
           />
+        </div>
+
+        <div className="flex items-start justify-between gap-4 rounded-xl border border-gold/40 bg-gold/10 p-4">
+          <div>
+            <Label htmlFor="moving-out" className="flex items-center gap-1.5 font-medium">
+              <PlaneTakeoff className="size-4 text-gold-foreground" />
+              I'm moving out
+            </Label>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+              Turns your profile into a moving-out sale. Buyers can pick several of
+              your items and send one offer for the lot.
+            </p>
+          </div>
+          <Switch id="moving-out" checked={movingOut} onCheckedChange={setMovingOut} />
         </div>
 
         <div className="grid gap-2">

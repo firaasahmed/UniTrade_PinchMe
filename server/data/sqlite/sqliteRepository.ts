@@ -92,6 +92,7 @@ export function createSqliteRepository(
     role: str(r.role) === "admin" ? "admin" : "student",
     verified: bool(r.verified),
     orgType: optStr(r.orgType) as User["orgType"],
+    movingOut: bool(r.movingOut),
     location: str(r.location),
     lat: num(r.lat),
     lng: num(r.lng),
@@ -169,6 +170,7 @@ export function createSqliteRepository(
     proposedBy: str(r.proposedBy),
     status: str(r.status) as DealStatus,
     paidAt: nullStr(r.paidAt),
+    bundleListingIds: r.bundleListingIds == null ? undefined : json<string[]>(r.bundleListingIds, []),
     createdAt: str(r.createdAt),
     updatedAt: str(r.updatedAt),
   });
@@ -248,6 +250,7 @@ export function createSqliteRepository(
     updateUser: (id, patch: UserPatch) => {
       if (patch.name !== undefined) run("UPDATE users SET name = ? WHERE id = ?", patch.name, id);
       if (patch.location !== undefined) run("UPDATE users SET location = ? WHERE id = ?", patch.location, id);
+      if (patch.movingOut !== undefined) run("UPDATE users SET movingOut = ? WHERE id = ?", patch.movingOut ? 1 : 0, id);
       const r = one("SELECT * FROM users WHERE id = ?", id);
       return r ? toUser(r) : undefined;
     },
@@ -553,12 +556,13 @@ export function createSqliteRepository(
         proposedBy,
         status: "pending",
         paidAt: null,
+        bundleListingIds: input.bundleListingIds,
         createdAt: now,
         updatedAt: now,
       };
       run(
-        `INSERT INTO deals (id,listingId,buyerId,sellerId,kind,amountCents,scheduledFor,note,proposedBy,status,paidAt,createdAt,updatedAt)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        `INSERT INTO deals (id,listingId,buyerId,sellerId,kind,amountCents,scheduledFor,note,proposedBy,status,paidAt,bundleListingIds,createdAt,updatedAt)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         row.id,
         row.listingId,
         row.buyerId,
@@ -570,6 +574,7 @@ export function createSqliteRepository(
         row.proposedBy,
         row.status,
         null,
+        row.bundleListingIds ? JSON.stringify(row.bundleListingIds) : null,
         row.createdAt,
         row.updatedAt,
       );
@@ -607,6 +612,17 @@ function migrate(db: DatabaseSync, seed: SeedData): void {
     // accounts that predate passwords get the shared demo one so they can still sign in
     db.prepare("UPDATE users SET passwordHash = ? WHERE passwordHash IS NULL").run(SEED_PASSWORD_HASH);
   }
+
+  if (!columns("users").includes("movingOut")) {
+    db.exec("ALTER TABLE users ADD COLUMN movingOut INTEGER NOT NULL DEFAULT 0");
+    // seeded movers keep their flag on databases created before the column existed
+    const fill = db.prepare("UPDATE users SET movingOut = 1 WHERE id = ?");
+    for (const u of seed.users) if (u.movingOut) fill.run(u.id);
+  }
+
+  if (!columns("deals").includes("bundleListingIds")) {
+    db.exec("ALTER TABLE deals ADD COLUMN bundleListingIds TEXT");
+  }
 }
 
 // brand deals are reference data, so they fill in on any db that lacks them
@@ -630,8 +646,8 @@ function seedIfEmpty(db: DatabaseSync, seed: SeedData): void {
     "INSERT INTO universities (id,name,emailDomains,city,state,lat,lng) VALUES (?,?,?,?,?,?,?)",
   );
   const insertUser = db.prepare(
-    `INSERT INTO users (id,name,email,universityId,role,passwordHash,verified,orgType,location,lat,lng,createdAt)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO users (id,name,email,universityId,role,passwordHash,verified,orgType,movingOut,location,lat,lng,createdAt)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
   );
   const insertListing = db.prepare(
     `INSERT INTO listings (id,sellerId,title,description,priceCents,rateUnit,category,condition,location,lat,lng,meetup,imageUrl,images,unlimited,status,bedrooms,bathrooms,bondCents,availableFrom,leaseTerm,furnished,createdAt,updatedAt)
@@ -653,6 +669,7 @@ function seedIfEmpty(db: DatabaseSync, seed: SeedData): void {
         SEED_PASSWORD_HASH,
         u.verified ? 1 : 0,
         b(u.orgType),
+        u.movingOut ? 1 : 0,
         u.location,
         u.lat,
         u.lng,
