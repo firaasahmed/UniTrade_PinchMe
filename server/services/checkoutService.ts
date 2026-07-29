@@ -78,6 +78,17 @@ function settle(
   if (dealId) repo.markDealPaid(dealId);
   // take it off the market so it can't be double-sold, unless it never runs out
   if (!listing.unlimited) repo.updateListing(listing.id, { status: "sold" });
+  // a paid bundle takes every listing in it off the market, not just the anchor
+  if (dealId) {
+    const deal = repo.getDeal(dealId);
+    for (const id of deal?.bundleListingIds ?? []) {
+      if (id === listing.id) continue;
+      const bundled = repo.getListing(id);
+      if (bundled && !bundled.unlimited && bundled.status === "active") {
+        repo.updateListing(id, { status: "sold" });
+      }
+    }
+  }
   // let the seller know their item sold
   const buyer = repo.getUser(buyerId);
   repo.createNotification({

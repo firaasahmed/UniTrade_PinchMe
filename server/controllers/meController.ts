@@ -11,10 +11,11 @@ export function me(req: Request, res: Response): void {
 
 export function update(req: Request, res: Response): void {
   const user = requireUser(req);
-  const body = req.body as { name?: unknown; location?: unknown };
+  const body = req.body as { name?: unknown; location?: unknown; movingOut?: unknown };
   const patch: UserPatch = {};
   if (typeof body.name === "string") patch.name = body.name;
   if (typeof body.location === "string") patch.location = body.location;
+  if (typeof body.movingOut === "boolean") patch.movingOut = body.movingOut;
   res.json(updateMe(user, patch));
 }
 

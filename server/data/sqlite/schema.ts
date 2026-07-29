@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
   passwordHash  TEXT,
   verified      INTEGER NOT NULL DEFAULT 0,
   orgType       TEXT,
+  movingOut     INTEGER NOT NULL DEFAULT 0,
   location      TEXT NOT NULL,
   lat           REAL NOT NULL,
   lng           REAL NOT NULL,
@@ -114,19 +115,20 @@ CREATE TABLE IF NOT EXISTS watchlist (
 );
 
 CREATE TABLE IF NOT EXISTS deals (
-  id           TEXT PRIMARY KEY,
-  listingId    TEXT NOT NULL REFERENCES listings(id),
-  buyerId      TEXT NOT NULL REFERENCES users(id),
-  sellerId     TEXT NOT NULL REFERENCES users(id),
-  kind         TEXT NOT NULL,
-  amountCents  INTEGER,
-  scheduledFor TEXT,
-  note         TEXT NOT NULL DEFAULT '',
-  proposedBy   TEXT NOT NULL REFERENCES users(id),
-  status       TEXT NOT NULL,
-  paidAt       TEXT,
-  createdAt    TEXT NOT NULL,
-  updatedAt    TEXT NOT NULL
+  id                TEXT PRIMARY KEY,
+  listingId         TEXT NOT NULL REFERENCES listings(id),
+  buyerId           TEXT NOT NULL REFERENCES users(id),
+  sellerId          TEXT NOT NULL REFERENCES users(id),
+  kind              TEXT NOT NULL,
+  amountCents       INTEGER,
+  scheduledFor      TEXT,
+  note              TEXT NOT NULL DEFAULT '',
+  proposedBy        TEXT NOT NULL REFERENCES users(id),
+  status            TEXT NOT NULL,
+  paidAt            TEXT,
+  bundleListingIds  TEXT,
+  createdAt         TEXT NOT NULL,
+  updatedAt         TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_deals_thread ON deals(listingId, buyerId, sellerId);
 `;

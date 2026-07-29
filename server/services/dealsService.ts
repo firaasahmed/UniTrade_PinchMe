@@ -1,5 +1,5 @@
 import { repo } from "../data/index.ts";
-import type { DealRow, DealView, DealActions, NewDeal, DealKind } from "../../src/types/Deal.ts";
+import type { DealRow, DealView, DealActions, NewDeal, DealKind, BundleItem } from "../../src/types/Deal.ts";
 import { isLive, isPayable } from "../../src/types/Deal.ts";
 import type { User } from "../../src/types/User.ts";
 import { publicUser } from "./listingsService.ts";
@@ -42,7 +42,19 @@ function view(row: DealRow, userId: string): DealView {
     buyer: publicUser(row.buyerId),
     seller: publicUser(row.sellerId),
     actions: actionsFor(row, userId),
+    bundleListings: bundleItems(row),
   };
+}
+
+// resolve the bundle ids to just enough listing data to render the offer
+function bundleItems(row: DealRow): BundleItem[] | undefined {
+  if (!row.bundleListingIds || row.bundleListingIds.length === 0) return undefined;
+  const items: BundleItem[] = [];
+  for (const id of row.bundleListingIds) {
+    const l = repo.getListing(id);
+    if (l) items.push({ id: l.id, title: l.title, priceCents: l.priceCents, imageUrl: l.imageUrl });
+  }
+  return items;
 }
 
 function assertParty(deal: DealRow, user: User): void {
@@ -64,8 +76,17 @@ function describe(deal: DealRow, note: string): string {
       ? `Requested an inspection for ${deal.scheduledFor ?? "a time that suits"}`
       : deal.kind === "quote"
         ? `Sent a quote: ${money}${deal.scheduledFor ? ` for ${deal.scheduledFor}` : ""}`
-        : `Offered ${money}`;
+        : deal.bundleListingIds && deal.bundleListingIds.length > 1
+          ? `Offered ${money} for a bundle of ${deal.bundleListingIds.length} items (${bundleTitles(deal)})`
+          : `Offered ${money}`;
   return note ? `${head}. ${note}` : head;
+}
+
+function bundleTitles(deal: DealRow): string {
+  return (deal.bundleListingIds ?? [])
+    .map((id) => repo.getListing(id)?.title ?? "")
+    .filter(Boolean)
+    .join(", ");
 }
 
 export function listForThread(user: User, listingId: string, otherUserId: string): DealView[] {
@@ -112,9 +133,11 @@ export function createDeal(user: User, input: NewDeal): DealView {
   const buyerId = isSeller ? requireQuoteRecipient(input) : user.id;
   if (isSeller && !repo.getUser(buyerId)) throw new NotFoundError("recipient not found");
 
+  const bundleListingIds = validateBundle(input, listing.sellerId);
+
   // one live deal per thread — a fresh proposal replaces whatever was on the table
   supersedeLive(input.listingId, buyerId, listing.sellerId);
-  const row = repo.createDeal(buyerId, listing.sellerId, user.id, input);
+  const row = repo.createDeal(buyerId, listing.sellerId, user.id, { ...input, bundleListingIds });
 
   // a proposal opens (or continues) the conversation so it's visible in messages
   repo.createMessage({
@@ -147,6 +170,32 @@ function supersedeLive(listingId: string, buyerId: string, sellerId: string): vo
   for (const d of repo.getDealsForThread(listingId, buyerId, sellerId)) {
     if (isLive(d)) repo.updateDealStatus(d.id, "countered");
   }
+}
+
+// a moving-out bundle: one offer covering several of the same seller's item listings.
+// the first id is the anchor the thread and checkout hang off — it must match listingId
+function validateBundle(input: NewDeal, sellerId: string): string[] | undefined {
+  if (!input.bundleListingIds || input.bundleListingIds.length === 0) return undefined;
+
+  if (input.kind !== "offer") throw new ValidationError("only item offers can be bundled");
+  const seller = repo.getUser(sellerId);
+  if (!seller?.movingOut) {
+    throw new ValidationError("bundle offers are only available on moving-out sales");
+  }
+  const ids = [...new Set(input.bundleListingIds)];
+  if (ids.length < 2) throw new ValidationError("a bundle needs at least two listings");
+  if (!ids.includes(input.listingId)) throw new ValidationError("the bundle must include the listing the offer is on");
+
+  for (const id of ids) {
+    const l = repo.getListing(id);
+    if (!l) throw new NotFoundError(`listing ${id} not found`);
+    if (l.sellerId !== sellerId) throw new ValidationError("all bundled listings must belong to the same seller");
+    if (l.status !== "active") throw new ValidationError(`"${l.title}" is no longer available`);
+    if (dealKindForCategory(l.category) !== "offer") {
+      throw new ValidationError("only items can go in a bundle — rooms and services are arranged separately");
+    }
+  }
+  return ids;
 }
 
 // quotes carry their recipient on the input; typed loosely at the edge then checked
@@ -227,6 +276,8 @@ function supersede(
     amountCents: deal.kind === "inspection" ? undefined : amountCents,
     scheduledFor,
     note,
+    // a counter on a bundle is still for the whole bundle
+    bundleListingIds: deal.bundleListingIds,
   });
 
   const lead = as === "counter" ? "Countered" : deal.status === "accepted" ? "Reopened" : "Updated";

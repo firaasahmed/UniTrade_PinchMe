@@ -12,6 +12,7 @@ export function toSessionUser(user: User): SessionUser {
     universityId: user.universityId,
     university: repo.getUniversity(user.universityId)?.name ?? "",
     location: user.location,
+    movingOut: user.movingOut ?? false,
   };
 }
 
@@ -24,6 +25,7 @@ export function updateMe(user: User, patch: UserPatch): SessionUser {
     clean.name = name;
   }
   if (patch.location !== undefined) clean.location = patch.location.trim();
+  if (patch.movingOut !== undefined) clean.movingOut = patch.movingOut === true;
 
   const updated = repo.updateUser(user.id, clean);
   if (!updated) throw new NotFoundError("user not found");

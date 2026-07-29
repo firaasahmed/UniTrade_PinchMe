@@ -19,12 +19,15 @@ import {
   GraduationCap,
   Handshake,
   Lock,
+  PlaneTakeoff,
   Search,
   ShieldCheck,
   Sparkles,
   Tag,
   type LucideIcon,
 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatPrice, initials } from "@/utils/format";
 
 type State =
   | { status: "loading" }
@@ -77,7 +80,9 @@ export function HomePage() {
           <p className="text-destructive">Couldn't load listings: {state.message}</p>
         )}
         {state.status === "loaded" && (
-          <>            <Rows listings={state.listings} />
+          <>
+            <MovingOutSales listings={state.listings} />
+            <Rows listings={state.listings} />
           </>
         )}
       </div>
@@ -417,6 +422,120 @@ function HowItWorks() {
         })}
       </div>
     </section>
+  );
+}
+
+/* ---------------------- moving-out storefronts ---------------------- */
+
+type MovingOutSale = {
+  sellerId: string;
+  name: string;
+  university: string;
+  verified: boolean;
+  items: Listing[];
+  totalCents: number;
+};
+
+function MovingOutSales({ listings }: { listings: Listing[] }) {
+  const sales = useMemo(() => {
+    const bySeller = new Map<string, MovingOutSale>();
+    for (const l of listings) {
+      if (!l.seller.movingOut || l.status !== "active") continue;
+      if (categoryKind(l.category) !== "item") continue;
+      const existing = bySeller.get(l.sellerId);
+      if (existing) {
+        existing.items.push(l);
+        existing.totalCents += l.priceCents;
+      } else {
+        bySeller.set(l.sellerId, {
+          sellerId: l.sellerId,
+          name: l.seller.name,
+          university: l.seller.university,
+          verified: l.seller.verified,
+          items: [l],
+          totalCents: l.priceCents,
+        });
+      }
+    }
+    return [...bySeller.values()].filter((s) => s.items.length >= 2);
+  }, [listings]);
+
+  if (sales.length === 0) return null;
+
+  return (
+    <Reveal className="mb-12">
+      <div className="mb-5 flex items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-widest text-gold-foreground">
+            Leaving soon
+          </p>
+          <h2 className="mt-1 font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+            Moving-out sales
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Students flying home. Pick several items and make one offer for the lot.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {sales.map((sale) => (
+          <Link
+            key={sale.sellerId}
+            to={`/profile/${sale.sellerId}`}
+            className="group relative overflow-hidden rounded-3xl border border-gold/30 bg-gradient-to-br from-gold/20 via-card to-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gold/60 hover:shadow-md"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Avatar className="size-12 ring-2 ring-gold/40">
+                  <AvatarFallback className="bg-primary text-sm font-semibold text-primary-foreground">
+                    {initials(sale.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-heading text-base font-bold">{sale.name}</p>
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                    {sale.verified && <ShieldCheck className="size-3 text-verified" />}
+                    {sale.university}
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-full bg-gold px-2.5 py-1 text-[11px] font-bold text-gold-foreground">
+                <PlaneTakeoff className="size-3" />
+                Moving out
+              </span>
+            </div>
+
+            <div className="mt-4 flex -space-x-2">
+              {sale.items.slice(0, 4).map((l) => (
+                <div
+                  key={l.id}
+                  className="size-14 overflow-hidden rounded-xl border-2 border-card shadow-sm sm:size-16"
+                >
+                  <img src={l.imageUrl} alt={l.title} className="size-full object-cover" />
+                </div>
+              ))}
+              {sale.items.length > 4 && (
+                <div className="flex size-14 items-center justify-center rounded-xl border-2 border-card bg-muted text-xs font-semibold text-muted-foreground sm:size-16">
+                  +{sale.items.length - 4}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">{sale.items.length} items</span>
+                {" · "}asking {formatPrice(sale.totalCents)}
+              </p>
+              <span className="flex items-center gap-1 text-sm font-semibold text-gold-foreground transition-transform group-hover:translate-x-0.5">
+                Browse the sale
+                <ArrowRight className="size-4" />
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </Reveal>
   );
 }
 

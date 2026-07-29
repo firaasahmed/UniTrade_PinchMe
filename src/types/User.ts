@@ -12,6 +12,8 @@ export type User = {
   verified: boolean;
   // set for organisational accounts (university housing offices, real estate agencies)
   orgType?: "university" | "agency";
+  // leaving soon — their profile becomes a moving-out sale and items can be bundled
+  movingOut?: boolean;
   location: string;
   lat: number;
   lng: number;
@@ -37,6 +39,7 @@ export type PublicUser = {
   university: string;
   verified: boolean;
   orgType?: "university" | "agency";
+  movingOut?: boolean;
 };
 
 // the signed-in user as the frontend sees themselves (GET /api/me)
@@ -49,6 +52,7 @@ export type SessionUser = {
   universityId: string;
   university: string;
   location: string;
+  movingOut?: boolean;
 };
 
 // a public profile: the safe user projection, join date, and their active listings
@@ -64,4 +68,5 @@ export type ProfileView = {
 export type UserPatch = {
   name?: string;
   location?: string;
+  movingOut?: boolean;
 };

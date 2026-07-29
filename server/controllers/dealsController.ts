@@ -39,6 +39,9 @@ export function create(req: Request, res: Response): void {
     note: str(b.note) ?? "",
   };
   if (typeof b.buyerId === "string") input.buyerId = b.buyerId;
+  if (Array.isArray(b.bundleListingIds) && b.bundleListingIds.every((v) => typeof v === "string")) {
+    input.bundleListingIds = b.bundleListingIds as string[];
+  }
   res.status(201).json(deals.createDeal(user, input));
 }
 
