@@ -6,9 +6,6 @@ export function ListingDetailPage() {
 
   if (!id) return null;
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <ListingDetail id={id} />
-    </div>
-  );
+  // ListingDetail brings its own container — wrapping it again doubles the padding
+  return <ListingDetail id={id} />;
 }

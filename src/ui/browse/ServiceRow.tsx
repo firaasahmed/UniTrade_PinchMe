@@ -1,40 +1,46 @@
 import type { Listing } from "@/types/Listing";
 import { ListingMedia } from "@/ui/ListingMedia";
-import { Badge } from "@/components/ui/badge";
 import { formatListingPrice } from "@/utils/format";
-import { ShieldCheck, ChevronRight } from "lucide-react";
+import { ShieldCheck, MapPin, ChevronRight } from "lucide-react";
 
-// services are priced by the hour and have no condition, so they get their own row
+// services are priced by the hour and led by the provider, so they get their own row:
+// photo left, title + provider in the middle, the rate loudest on the right
 export function ServiceRow({ listing, onOpen }: { listing: Listing; onOpen: (id: string) => void }) {
   return (
     <button
       type="button"
       onClick={() => onOpen(listing.id)}
-      className="flex w-full items-center gap-4 rounded-xl border bg-card p-3 text-left shadow-sm transition-colors hover:border-verified/50"
+      className="group flex w-full items-center gap-4 rounded-2xl border border-border/60 bg-card p-3 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-verified/40 hover:shadow-md sm:gap-5 sm:p-4"
     >
-      <div className="size-16 shrink-0 overflow-hidden rounded-lg sm:size-20">
-        <ListingMedia listing={listing} iconClass="size-6" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-2">
-          <h3 className="font-medium leading-tight">{listing.title}</h3>
-          <span className="text-sm font-semibold text-verified">{formatListingPrice(listing)}</span>
+      <div className="size-20 shrink-0 overflow-hidden rounded-xl sm:size-24">
+        <div className="size-full transition-transform duration-300 group-hover:scale-[1.05]">
+          <ListingMedia listing={listing} iconClass="size-6" />
         </div>
-        <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">{listing.description}</p>
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          {listing.condition && (
-            <Badge variant="secondary" className="border-transparent bg-verified/12 text-verified">
-              {listing.condition}
-            </Badge>
-          )}
-          <span>{listing.location}</span>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <h3 className="line-clamp-1 font-heading text-[0.95rem] font-semibold leading-tight">
+          {listing.title}
+        </h3>
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{listing.description}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            {listing.seller.verified && <ShieldCheck className="size-3 text-verified" />}
+            {listing.seller.verified && <ShieldCheck className="size-3.5 text-verified" />}
             {listing.seller.name}
+          </span>
+          <span className="flex items-center gap-1">
+            <MapPin className="size-3.5" />
+            {listing.location}
           </span>
         </div>
       </div>
-      <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+
+      <div className="flex shrink-0 items-center gap-2 self-center sm:gap-3">
+        <span className="whitespace-nowrap font-heading text-base font-bold text-verified sm:text-lg">
+          {formatListingPrice(listing)}
+        </span>
+        <ChevronRight className="size-5 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" />
+      </div>
     </button>
   );
 }

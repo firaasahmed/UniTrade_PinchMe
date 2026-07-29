@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import type { Journey } from "@/utils/deal-journey";
 import type { DealView } from "@/types/Deal";
+import type { Listing } from "@/types/Listing";
 import { createDeal, counterDeal } from "@/api/deals-api";
 import { useSession } from "@/session/SessionContext";
+import { ListingMedia } from "@/ui/ListingMedia";
+import { formatListingPrice } from "@/utils/format";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +31,7 @@ function toCents(v: string): number | undefined {
 // opens a new proposal, or counters an existing one when counterOf is given
 export function DealDialog({
   listingId,
+  listing,
   journey,
   trigger,
   buyerId,
@@ -38,6 +42,8 @@ export function DealDialog({
   defaultWhen,
 }: {
   listingId: string;
+  // when given, the dialog shows what's being negotiated (photo, title, asking price)
+  listing?: Listing;
   journey: Journey;
   trigger: ReactNode;
   buyerId?: string;
@@ -106,6 +112,21 @@ export function DealDialog({
           <DialogTitle>{counterOf ? "Send a counter" : journey.dialogTitle}</DialogTitle>
           <DialogDescription>{journey.ctaHint}</DialogDescription>
         </DialogHeader>
+
+        {listing && (
+          <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/40 p-2.5">
+            <div className="size-14 shrink-0 overflow-hidden rounded-lg">
+              <ListingMedia listing={listing} iconClass="size-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="line-clamp-1 text-sm font-medium">{listing.title}</p>
+              <p className="text-sm">
+                <span className="font-heading font-bold">{formatListingPrice(listing)}</span>{" "}
+                <span className="text-xs text-muted-foreground">asking</span>
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4">
           {needsAmount && (
