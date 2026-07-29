@@ -168,3 +168,28 @@
     user-select: text;
   }
 }
+
+@keyframes onboard-confetti {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(12px, -140px, 0) rotate(220deg) scale(0.35);
+    opacity: 0;
+  }
+}
+
+@keyframes onboard-confetti-fall {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--drift, 40px), 110vh, 0) rotate(var(--spin, 360deg));
+    opacity: 0;
+  }
+}
