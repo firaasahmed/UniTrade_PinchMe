@@ -9,7 +9,7 @@ import { toCents } from "@/utils/money";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Handshake, CalendarCheck, Check, X, Loader2, Lock, ArrowLeftRight } from "lucide-react";
+import { Handshake, CalendarCheck, Check, X, Loader2, Lock, ArrowLeftRight, PlaneTakeoff } from "lucide-react";
 
 // a deal shown inline in the conversation, with the actions the server says are open
 export function DealMessage({
@@ -28,7 +28,9 @@ export function DealMessage({
   // once accepted the card reads as a message from whoever accepted it, not the proposer
   const accepted = deal.status === "accepted";
   const fromMe = accepted ? !can.mine : can.mine;
-  const Icon = deal.kind === "inspection" ? CalendarCheck : Handshake;
+  // a moving-out bundle: one offer covering several listings, paid in one go
+  const bundle = deal.bundleListings && deal.bundleListings.length > 1 ? deal.bundleListings : undefined;
+  const Icon = deal.kind === "inspection" ? CalendarCheck : bundle ? PlaneTakeoff : Handshake;
 
   async function run(fn: () => Promise<unknown>, msg: string) {
     setBusy(true);
@@ -73,10 +75,14 @@ export function DealMessage({
   const headline = accepted
     ? deal.kind === "inspection"
       ? `Inspection confirmed for ${deal.scheduledFor ?? "the time you asked"}`
-      : `Deal agreed at ${formatPrice(deal.amountCents ?? 0)}`
+      : bundle
+        ? `Bundle agreed at ${formatPrice(deal.amountCents ?? 0)} for ${bundle.length} items`
+        : `Deal agreed at ${formatPrice(deal.amountCents ?? 0)}`
     : deal.kind === "inspection"
       ? `Inspection requested for ${deal.scheduledFor ?? "a time that suits"}`
-      : `${deal.kind === "quote" ? "Quote" : "Offer"} of ${formatPrice(deal.amountCents ?? 0)}`;
+      : bundle
+        ? `Bundle offer of ${formatPrice(deal.amountCents ?? 0)} for ${bundle.length} items`
+        : `${deal.kind === "quote" ? "Quote" : "Offer"} of ${formatPrice(deal.amountCents ?? 0)}`;
 
   const repriceLabel = can.mine ? "Change amount" : "Counter";
   const canReprice = can.canRevise || can.canCounter;
@@ -90,6 +96,20 @@ export function DealMessage({
         </div>
 
         <div className="px-3.5 py-3">
+          {bundle && (
+            <div className="mb-2 divide-y overflow-hidden rounded-lg border bg-muted/30">
+              {bundle.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-xs">
+                  <span className="line-clamp-1">{item.title}</span>
+                  <span className="shrink-0 text-muted-foreground">{formatPrice(item.priceCents)}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold">
+                <span>Asking total</span>
+                <span>{formatPrice(bundle.reduce((sum, i) => sum + i.priceCents, 0))}</span>
+              </div>
+            </div>
+          )}
           {deal.note && <p className="text-sm text-muted-foreground">{deal.note}</p>}
 
           <div className="mt-2 flex flex-wrap items-center gap-2">

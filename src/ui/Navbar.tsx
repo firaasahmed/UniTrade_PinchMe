@@ -62,7 +62,7 @@ function SearchBox({
       <Search
         className={cn(
           "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2",
-          onDark ? "text-primary-foreground/60" : "text-muted-foreground",
+          onDark ? "text-nav-from/55" : "text-muted-foreground",
         )}
       />
       <Input
@@ -73,7 +73,7 @@ function SearchBox({
         className={cn(
           "h-10 pl-9",
           onDark &&
-            "border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/50 focus-visible:border-gold focus-visible:ring-gold/30",
+            "border-transparent bg-primary-foreground text-foreground shadow-md shadow-black/15 placeholder:text-muted-foreground focus-visible:border-gold focus-visible:ring-gold/40",
         )}
         aria-label="Search listings"
       />

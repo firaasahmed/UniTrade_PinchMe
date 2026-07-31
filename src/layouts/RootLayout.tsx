@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { WatchlistProvider } from "@/context/WatchlistContext";
 import { Navbar } from "@/ui/Navbar";
 import { Footer } from "@/ui/Footer";
+import { OnboardingModal } from "@/ui/onboarding/OnboardingModal";
 
 const NO_FOOTER = ["/sell/new", "/sell/edit", "/checkout", "/login", "/register"];
 
@@ -25,6 +26,7 @@ export function RootLayout() {
             <Outlet />
           </main>
           {showFooter && <Footer />}
+          <OnboardingModal />
           <Toaster position="top-center" richColors />
         </div>
       </WatchlistProvider>

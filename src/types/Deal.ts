@@ -16,6 +16,7 @@ export type DealStatus =
 
 export type DealRow = {
   id: string;
+  // the anchor listing — messages and checkout hang off this one
   listingId: string;
   buyerId: string;
   sellerId: string;
@@ -30,6 +31,9 @@ export type DealRow = {
   status: DealStatus;
   // set once an accepted deal has been paid, so it can't be reused
   paidAt: string | null;
+  // moving-out bundles: every listing covered by this one offer (includes the anchor).
+  // absent for ordinary single-listing deals
+  bundleListingIds?: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -48,7 +52,21 @@ export type DealActions = {
   locked: boolean;
 };
 
-export type DealView = DealRow & { buyer: PublicUser; seller: PublicUser; actions: DealActions };
+// enough of each bundled listing to render the offer without extra fetches
+export type BundleItem = {
+  id: string;
+  title: string;
+  priceCents: number;
+  imageUrl: string;
+};
+
+export type DealView = DealRow & {
+  buyer: PublicUser;
+  seller: PublicUser;
+  actions: DealActions;
+  // resolved from bundleListingIds so the client can show what's in the bundle
+  bundleListings?: BundleItem[];
+};
 
 export type NewDeal = {
   listingId: string;
@@ -56,6 +74,7 @@ export type NewDeal = {
   amountCents?: number;
   scheduledFor?: string;
   note: string;
+  bundleListingIds?: string[];
 };
 
 // only an accepted, unpaid deal with an amount can drive a payment
