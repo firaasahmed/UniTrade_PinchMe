@@ -22,8 +22,10 @@ export type DealRow = {
   kind: DealKind;
   // absent for inspections — those never carry money
   amountCents?: number;
-  // free-text timing for quotes and inspections, e.g. "Sat 2 Aug, 10am"
+  // free-text timing, e.g. "Sat 2 Aug, 10am" — quotes, and inspections asked off-pattern
   scheduledFor?: string;
+  // "2026-08-02T10:00" — set when the time came from a slot, so it's machine-readable
+  scheduledAt?: string;
   note: string;
   // whose proposal is currently on the table
   proposedBy: string;
@@ -55,6 +57,7 @@ export type NewDeal = {
   kind: DealKind;
   amountCents?: number;
   scheduledFor?: string;
+  scheduledAt?: string;
   note: string;
 };
 

@@ -83,10 +83,10 @@ account uses the password **`admin`**.
 
 1. Sign in as a buyer: **`admin@pinch.edu.au`** / **`admin`**.
 2. Open **Items → "Laptop, great for uni work"** ($620).
-3. Hit **Make a deal** and offer something under asking, say **$520**.
+3. Hit **Make an offer** and offer something under asking, say **$520**.
 4. You land in Messages, where the offer sits in the thread.
 5. Open a private window and sign in as the seller,
-   **`aiko.t@student.unsw.edu.au`** / **`admin`**. Accept or counter the
+   **`aiko.t@uon.edu.au`** / **`admin`**. Accept or counter the
    offer there — both sides can move the number until the money lands.
 6. Back as the buyer, press **Pay**. That hands you to Pinch's hosted checkout;
    card **`4242 4242 4242 4242`**, any future expiry, any CVC.

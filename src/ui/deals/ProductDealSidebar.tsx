@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/utils/format";
+import { formatSlot } from "@/utils/format-slot";
 import { toCents } from "@/utils/money";
 import { cn } from "@/lib/utils";
 import { Package, Check, X, Handshake, ExternalLink, Loader2, CalendarCheck } from "lucide-react";
@@ -114,7 +115,7 @@ export function ProductDealSidebar({
   const canReprice = Boolean(can?.canCounter || can?.canRevise);
 
   return (
-    <aside className="flex flex-col gap-3 lg:max-h-[70vh] lg:overflow-y-auto">
+    <aside className="flex flex-col gap-3 lg:max-h-[78vh] lg:overflow-y-auto">
       {/* the deal comes first — it's the thing you act on */}
       <div className="rounded-2xl border bg-card p-3 shadow-sm">
         <div className="flex items-center justify-between gap-2">
@@ -135,7 +136,11 @@ export function ProductDealSidebar({
         {live ? (
           <div className="mt-2.5">
             <p className="text-2xl font-bold text-price">
-              {live.amountCents !== undefined ? formatPrice(live.amountCents) : live.scheduledFor}
+              {live.amountCents !== undefined
+                ? formatPrice(live.amountCents)
+                : live.scheduledAt
+                  ? formatSlot(live.scheduledAt)
+                  : live.scheduledFor}
             </p>
             {listingPriceCents !== undefined && live.amountCents !== undefined && (
               <p className="text-xs text-muted-foreground">

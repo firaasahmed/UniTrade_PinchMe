@@ -37,6 +37,9 @@ export type PublicUser = {
   university: string;
   verified: boolean;
   orgType?: "university" | "agency";
+  // whether they've registered somewhere for money to land. no payment can be taken
+  // for their listings until this is true — the server enforces it either way
+  payoutReady: boolean;
 };
 
 // the signed-in user as the frontend sees themselves (GET /api/me)

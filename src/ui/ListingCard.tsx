@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import type { Listing } from "@/types/Listing";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Package, BedDouble, Bath } from "lucide-react";
+import { MapPin, Clock, Package, BedDouble, Bath, GraduationCap } from "lucide-react";
 import { formatListingPrice, formatDate } from "@/utils/format";
 import { categoryIcon, categoryKind, kindAccent } from "@/utils/categories";
 import { ListingMedia } from "@/ui/ListingMedia";
 import { WatchlistButton } from "@/ui/WatchlistButton";
+import { useCampusDistance } from "@/ui/listing/useCampusDistance";
 import { cn } from "@/lib/utils";
 
 // unit-main style: flat white card, plain border, image inset with its own radius
@@ -26,6 +27,7 @@ export function ListingCard({
   const accent = kindAccent(kind);
   const sold = listing.status === "sold";
   const row = variant === "row";
+  const distance = useCampusDistance(listing);
 
   return (
     <div
@@ -94,6 +96,12 @@ export function ListingCard({
             <MapPin className="size-3.5" />
             {listing.location}
           </span>
+          {kind === "accommodation" && distance && (
+            <span className="flex items-center gap-1">
+              <GraduationCap className="size-3.5" />
+              {distance.label}
+            </span>
+          )}
           <span className="flex items-center gap-1">
             <Clock className="size-3.5" />
             {formatDate(listing.createdAt)}

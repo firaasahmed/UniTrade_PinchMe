@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { buildApp } from "./app.ts";
 import { config } from "./config.ts";
-import { verifyCredentials, hasCredentials } from "./pinch.ts";
+import { verifyCredentials, hasCredentials } from "./payments/index.ts";
 
 const app = buildApp();
 const listen = (): void => {

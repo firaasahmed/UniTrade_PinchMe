@@ -258,9 +258,9 @@ function Thread({
   const submit = () => send(draft);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+    <div className="grid gap-4 lg:grid-cols-[1fr_290px]">
       {/* Left/Middle: Chat Stream */}
-      <div className="flex h-[70vh] flex-col rounded-2xl border bg-card shadow-sm">
+      <div className="flex h-[78vh] flex-col rounded-2xl border bg-card shadow-sm">
         <div className="flex items-center gap-3 border-b p-3">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={onBack} aria-label="Back">
             <ArrowLeft className="size-5" />
@@ -289,11 +289,12 @@ function Thread({
           )}
         </div>
 
-        {/* what the conversation is about, with a way back to it */}
+        {/* the sidebar carries this on wide screens — here it's only for mobile,
+            where the sidebar sits below the fold */}
         {ts.status === "loaded" && (
           <Link
             to={`/listing/${listingId}`}
-            className="flex items-center gap-3 border-b bg-muted/40 p-3 transition-colors hover:bg-accent/50"
+            className="flex items-center gap-3 border-b bg-muted/40 p-3 transition-colors hover:bg-accent/50 lg:hidden"
           >
             <div className="size-12 shrink-0 overflow-hidden rounded-md bg-muted">
               {ts.thread.listingImageUrl ? (

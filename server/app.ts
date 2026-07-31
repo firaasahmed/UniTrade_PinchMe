@@ -7,7 +7,7 @@ import { requestLogger } from "./middleware/requestLogger.ts";
 import { attachUser } from "./middleware/auth.ts";
 import { errorHandler } from "./middleware/errorHandler.ts";
 import { rateLimit } from "./middleware/rateLimit.ts";
-import { hasCredentials } from "./pinch.ts";
+import { hasCredentials } from "./payments/index.ts";
 import { listingsRouter } from "./routers/listings.ts";
 import { universitiesRouter } from "./routers/universities.ts";
 import { checkoutRouter } from "./routers/checkout.ts";
@@ -19,8 +19,15 @@ import { notificationsRouter } from "./routers/notifications.ts";
 import { usersRouter } from "./routers/users.ts";
 import { dealsRouter } from "./routers/deals.ts";
 import { brandDealsRouter } from "./routers/brandDeals.ts";
+import { addressesRouter } from "./routers/addresses.ts";
+import { merchantsRouter } from "./routers/merchants.ts";
+import { useGeocodeProvider } from "./geo.ts";
+import { nswAddressProvider } from "./geo/nswAddressProvider.ts";
 
 export function buildApp() {
+  // the local extract is the only geocoder — nothing here calls a metered api
+  useGeocodeProvider(nswAddressProvider);
+
   const app = express();
   // behind render/fly/railway proxies, so req.ip is the client and not the load balancer
   app.set("trust proxy", 1);
@@ -52,6 +59,8 @@ export function buildApp() {
   app.use("/api/users", usersRouter);
   app.use("/api/deals", dealsRouter);
   app.use("/api/brand-deals", brandDealsRouter);
+  app.use("/api/addresses", addressesRouter);
+  app.use("/api/merchants", merchantsRouter);
 
   serveBuiltApp(app);
 

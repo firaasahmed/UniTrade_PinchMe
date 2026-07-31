@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import * as listings from "../services/listingsService.ts";
+import { calendarFor } from "../services/inspectionsService.ts";
+import { systemClock } from "../lib/clock.ts";
 import { requireUser } from "../middleware/auth.ts";
 import { param, queryString } from "../lib/http.ts";
 import type { ListingFilter, NewListing, ListingPatch } from "../../src/types/Listing.ts";
@@ -15,6 +17,10 @@ export function list(req: Request, res: Response): void {
 
 export function getOne(req: Request, res: Response): void {
   res.json(listings.getListingView(param(req, "id")));
+}
+
+export function inspections(req: Request, res: Response): void {
+  res.json(calendarFor(param(req, "id"), systemClock().slice(0, 10)));
 }
 
 export function mine(req: Request, res: Response): void {

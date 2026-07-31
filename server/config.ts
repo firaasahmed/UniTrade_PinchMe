@@ -14,7 +14,9 @@ function jwtSecret(): string {
 
 export const config = {
   isProduction,
-  port: Number(process.env.PORT ?? 3001),
+  // API_PORT wins in dev so a tool that injects PORT for the browser can't take the api's
+  // port from it; hosting platforms set PORT and that still works in production
+  port: Number(process.env.API_PORT ?? process.env.PORT ?? 3001),
   // sqlite file; ":memory:" gives a throwaway db for tests
   databaseFile: process.env.DATABASE_FILE ?? "data/unitrade.db",
   jwtSecret: jwtSecret(),

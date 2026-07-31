@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS users (
   universityId  TEXT NOT NULL REFERENCES universities(id),
   role          TEXT NOT NULL,
   passwordHash  TEXT,
+  pinchPayerId  TEXT,
+  pinchMerchantId TEXT,
   verified      INTEGER NOT NULL DEFAULT 0,
   orgType       TEXT,
   location      TEXT NOT NULL,
@@ -29,6 +31,15 @@ CREATE TABLE IF NOT EXISTS users (
   createdAt     TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- a pinch payer belongs to one merchant, so the same student has a separate payer
+-- record under every seller they buy from. merchantId is '' for our own account
+CREATE TABLE IF NOT EXISTS pinch_payers (
+  userId      TEXT NOT NULL REFERENCES users(id),
+  merchantId  TEXT NOT NULL,
+  payerId     TEXT NOT NULL,
+  PRIMARY KEY (userId, merchantId)
+);
 
 CREATE TABLE IF NOT EXISTS brand_deals (
   id        TEXT PRIMARY KEY,
@@ -65,6 +76,8 @@ CREATE TABLE IF NOT EXISTS listings (
   availableFrom TEXT,
   leaseTerm     TEXT,
   furnished     INTEGER,
+  transit       TEXT,
+  inspectionAvailability TEXT,
   createdAt     TEXT NOT NULL,
   updatedAt     TEXT NOT NULL
 );
@@ -121,6 +134,7 @@ CREATE TABLE IF NOT EXISTS deals (
   kind         TEXT NOT NULL,
   amountCents  INTEGER,
   scheduledFor TEXT,
+  scheduledAt  TEXT,
   note         TEXT NOT NULL DEFAULT '',
   proposedBy   TEXT NOT NULL REFERENCES users(id),
   status       TEXT NOT NULL,

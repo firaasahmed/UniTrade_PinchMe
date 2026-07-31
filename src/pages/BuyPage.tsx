@@ -100,6 +100,7 @@ export function BuyPage() {
             state={state}
             results={results}
             services={filters.kind === "service"}
+            kind={filters.kind === "accommodation" ? "accommodation" : filters.kind === "service" ? "service" : "item"}
             onReset={reset}
           />
         </div>

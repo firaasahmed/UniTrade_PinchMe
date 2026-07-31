@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import type { Listing } from "@/types/Listing";
+import type { ListingKind } from "@/utils/categories";
 import { ListingCard } from "@/ui/ListingCard";
 import { ServiceRow } from "@/ui/browse/ServiceRow";
 import { EmptyState } from "@/ui/EmptyState";
+import { AffiliateStudentDiscounts } from "@/ui/browse/AffiliateStudentDiscounts";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchX } from "lucide-react";
@@ -17,12 +19,14 @@ export function ResultsList({
   state,
   results,
   services,
+  kind,
   onReset,
 }: {
   state: LoadState;
   results: Listing[];
   // services read as rows with a rate rather than cards with a price
   services: boolean;
+  kind?: ListingKind;
   onReset: () => void;
 }) {
   const navigate = useNavigate();
@@ -42,6 +46,10 @@ export function ResultsList({
   }
 
   if (results.length === 0) {
+    if (kind === "item") {
+      return <AffiliateStudentDiscounts onReset={onReset} />;
+    }
+
     return (
       <EmptyState
         icon={SearchX}

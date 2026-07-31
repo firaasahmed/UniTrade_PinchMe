@@ -23,6 +23,12 @@ export function list(req: Request, res: Response): void {
   res.json(deals.listForUser(user.id));
 }
 
+// "2026-08-02T10:00" or nothing — the service checks the slot is actually free
+function slotStamp(v: unknown): string | undefined {
+  const s = str(v)?.trim();
+  return s && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s) ? s : undefined;
+}
+
 export function create(req: Request, res: Response): void {
   const user = requireUser(req);
   const b = req.body as Record<string, unknown>;
@@ -36,6 +42,7 @@ export function create(req: Request, res: Response): void {
     kind,
     amountCents: typeof b.amountCents === "number" ? b.amountCents : undefined,
     scheduledFor: str(b.scheduledFor),
+    scheduledAt: slotStamp(b.scheduledAt),
     note: str(b.note) ?? "",
   };
   if (typeof b.buyerId === "string") input.buyerId = b.buyerId;

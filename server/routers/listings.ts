@@ -10,6 +10,7 @@ listingsRouter.get("/", c.list);
 listingsRouter.get("/mine", c.mine);
 listingsRouter.post("/", validateBody(parseNewListing), c.create);
 listingsRouter.get("/:id", c.getOne);
+listingsRouter.get("/:id/inspections", c.inspections);
 listingsRouter.patch("/:id", validateBody(parseListingPatch), c.update);
 listingsRouter.post("/:id/sold", c.markSold);
 listingsRouter.delete("/:id", c.remove);

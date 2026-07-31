@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import type { Listing } from "@/types/Listing";
+import type { Listing, TransitMode } from "@/types/Listing";
 import { getListing } from "@/api/listings-api";
 import { listingImages } from "@/types/Listing";
 import { useSession } from "@/session/SessionContext";
@@ -15,6 +15,7 @@ import { WatchlistButton } from "@/ui/WatchlistButton";
 import { DealDialog } from "@/ui/deals/DealDialog";
 import { journeyFor } from "@/utils/deal-journey";
 import { ListingGallery } from "@/ui/listing/ListingGallery";
+import { useCampusDistance } from "@/ui/listing/useCampusDistance";
 import { formatListingPrice, formatPrice, formatDate } from "@/utils/format";
 import { categoryIcon, categoryKind, kindAccent, type ListingKind } from "@/utils/categories";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,13 @@ import {
   Sofa,
   Share2,
   Pencil,
+  GraduationCap,
+  Footprints,
+  Bus,
+  TrainFront,
+  TramFront,
+  Ship,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -115,7 +123,8 @@ function Loaded({ listing }: { listing: Listing }) {
         ]}
       />
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-2">
+      {/* Top Hero Section: Photo Gallery + Action Details */}
+      <div className="mt-4 grid gap-6 lg:grid-cols-2 lg:items-start">
         {/* Gallery column */}
         <div>
           <ListingGallery images={listingImages(listing)} alt={listing.title} icon={Icon} />
@@ -153,10 +162,6 @@ function Loaded({ listing }: { listing: Listing }) {
 
             <h1 className="mt-2 font-heading text-2xl font-semibold sm:text-3xl">{listing.title}</h1>
             <p className="mt-1 text-2xl font-bold text-primary">{formatListingPrice(listing)}</p>
-
-            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-              {listing.description || "No description provided."}
-            </p>
           </div>
 
           {/* Seller Card */}
@@ -218,22 +223,33 @@ function Loaded({ listing }: { listing: Listing }) {
                 />
 
                 <p className="text-center text-xs text-muted-foreground">{journey.ctaHint}</p>
-
               </div>
             )}
           </div>
+        </div>
+      </div>
 
-          {/* everything factual in one two-column table, incl. what used to sit under the image */}
-          <div className="rounded-xl border border-border/80 bg-card p-5 shadow-sm">
-            <h2 className="mb-3 text-base font-semibold text-foreground">
-              {kind === "accommodation" ? "Property details" : "Details"}
-            </h2>
-            <DetailTable listing={listing} kind={kind} />
-            <p className="mt-4 flex items-center gap-2 border-t pt-3 text-sm font-medium text-verified">
-              <ShieldCheck className="size-4 shrink-0" />
-              Student checked. Protected by UniTrade
-            </p>
-          </div>
+      {/* Full-width 2-column information section for Description & Property Details */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2 lg:items-start">
+        {/* Left Column: Description Card */}
+        <div className="rounded-xl border border-border/80 bg-card p-5 shadow-sm">
+          <h2 className="mb-3 flex items-center gap-2 font-heading text-base font-semibold text-foreground">
+            <FileText className="size-4 shrink-0 text-muted-foreground" />
+            {kind === "accommodation" ? "About this property" : "Description"}
+          </h2>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+            {listing.description || "No description provided."}
+          </p>
+        </div>
+
+        {/* Right Column: Property details / Specifications Card */}
+        <div className="rounded-xl border border-border/80 bg-card p-5 shadow-sm">
+          <h2 className="mb-3 font-heading text-base font-semibold text-foreground">
+            {kind === "accommodation" ? "Property details" : "Details"}
+          </h2>
+          <DetailTable listing={listing} kind={kind} />
+          <p className="mt-4 flex items-center gap-2 border-t pt-3 text-sm font-medium text-verified">
+          </p>
         </div>
       </div>
     </div>
@@ -245,6 +261,7 @@ type Row = { icon: LucideIcon; label: string; value: string };
 // plain two-column table — no oversized icon tiles
 function DetailTable({ listing, kind }: { listing: Listing; kind: ListingKind }) {
   const rows: Row[] = [];
+  const distance = useCampusDistance(listing);
 
   if (kind === "accommodation") {
     if (listing.bedrooms !== undefined) rows.push({ icon: BedDouble, label: "Bedrooms", value: String(listing.bedrooms) });
@@ -262,6 +279,13 @@ function DetailTable({ listing, kind }: { listing: Listing; kind: ListingKind })
   }
 
   rows.push({ icon: MapPin, label: "Location", value: listing.location });
+  if (kind === "accommodation" && distance) {
+    rows.push({
+      icon: GraduationCap,
+      label: "From campus",
+      value: `${distance.label} in a straight line`,
+    });
+  }
   if (listing.meetup) {
     rows.push({
       icon: Handshake,
@@ -272,17 +296,58 @@ function DetailTable({ listing, kind }: { listing: Listing; kind: ListingKind })
   rows.push({ icon: CalendarDays, label: "Posted", value: formatDate(listing.createdAt) });
 
   return (
-    <dl className="divide-y text-sm">
-      {rows.map((r) => (
-        <div key={r.label} className="grid grid-cols-[9rem_1fr] gap-4 py-2.5">
-          <dt className="flex items-center gap-1.5 text-muted-foreground">
-            <r.icon className="size-3.5 shrink-0" />
-            {r.label}
-          </dt>
-          <dd className="font-medium">{r.value}</dd>
-        </div>
-      ))}
-    </dl>
+    <>
+      <dl className="divide-y text-sm">
+        {rows.map((r) => (
+          <div key={r.label} className="grid grid-cols-[9rem_1fr] gap-4 py-2.5">
+            <dt className="flex items-center gap-1.5 text-muted-foreground">
+              <r.icon className="size-3.5 shrink-0" />
+              {r.label}
+            </dt>
+            <dd className="font-medium">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <TransitChips listing={listing} />
+    </>
+  );
+}
+
+const TRANSIT_ICON: Record<TransitMode, LucideIcon> = {
+  walk: Footprints,
+  bus: Bus,
+  train: TrainFront,
+  tram: TramFront,
+  ferry: Ship,
+};
+
+// travel times come from the host — we say so rather than passing them off as measured
+function TransitChips({ listing }: { listing: Listing }) {
+  if (!listing.transit || listing.transit.length === 0) return null;
+  return (
+    <div className="mt-4 border-t pt-3">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Getting around
+      </p>
+      <ul className="flex flex-wrap gap-2">
+        {listing.transit.map((t) => {
+          const Icon = TRANSIT_ICON[t.mode];
+          return (
+            <li
+              key={`${t.mode}-${t.to}`}
+              className="flex items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1 text-xs"
+            >
+              <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="font-medium">{t.minutes} min</span>
+              <span className="text-muted-foreground">
+                {t.mode === "walk" ? "walk" : `by ${t.mode}`} to {t.to}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-2 text-xs text-muted-foreground">Times as stated by the TFNSW</p>
+    </div>
   );
 }
 

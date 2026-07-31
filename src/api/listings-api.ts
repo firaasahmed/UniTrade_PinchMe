@@ -1,5 +1,12 @@
 import type { Listing, NewListing, ListingPatch, ListingFilter } from "@/types/Listing";
+import type { InspectionCalendar } from "@/types/Inspection";
 import { apiFetch, errorMessage } from "@/lib/api";
+
+export async function getInspectionCalendar(listingId: string): Promise<InspectionCalendar> {
+  const res = await apiFetch(`/api/listings/${listingId}/inspections`);
+  if (!res.ok) throw new Error(`failed to load inspection times (${res.status})`);
+  return (await res.json()) as InspectionCalendar;
+}
 
 export async function getListings(filter: ListingFilter = {}): Promise<Listing[]> {
   const qs = new URLSearchParams();

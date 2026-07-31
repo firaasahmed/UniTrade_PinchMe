@@ -37,6 +37,10 @@ export function createInMemoryRepository(seed: SeedData, clock: Clock = systemCl
   const notifications: Notification[] = [];
   // userId -> bcrypt hash, kept out of the user object itself
   const hashes = new Map<string, string>(users.map((u) => [u.id, SEED_PASSWORD_HASH]));
+  // "userId:merchantId" -> pinch payer id; payers belong to one merchant
+  const payerIds = new Map<string, string>();
+  // userId -> managed merchant id, set once a seller registers to be paid
+  const merchantIds = new Map<string, string>();
   // userId -> set of watched listing ids
   const watchlists = new Map<string, Set<string>>();
 
@@ -85,6 +89,14 @@ export function createInMemoryRepository(seed: SeedData, clock: Clock = systemCl
     getPasswordHash: (userId) => hashes.get(userId),
     setPasswordHash: (userId, hash) => {
       hashes.set(userId, hash);
+    },
+    getPinchPayerId: (userId, merchantId) => payerIds.get(`${userId}:${merchantId}`),
+    setPinchPayerId: (userId, merchantId, payerId) => {
+      payerIds.set(`${userId}:${merchantId}`, payerId);
+    },
+    getPinchMerchantId: (userId) => merchantIds.get(userId),
+    setPinchMerchantId: (userId, merchantId) => {
+      merchantIds.set(userId, merchantId);
     },
     updateUser: (id, patch: UserPatch) => {
       const user = userById(id);
@@ -141,7 +153,10 @@ export function createInMemoryRepository(seed: SeedData, clock: Clock = systemCl
         bathrooms: input.bathrooms,
         bondCents: input.bondCents,
         availableFrom: input.availableFrom,
+        leaseTerm: input.leaseTerm,
         furnished: input.furnished,
+        transit: input.transit,
+        inspectionAvailability: input.inspectionAvailability,
         createdAt: now,
         updatedAt: now,
       };
@@ -244,6 +259,10 @@ export function createInMemoryRepository(seed: SeedData, clock: Clock = systemCl
     getBrandDeals: () => [...seed.brandDeals],
 
     getDeal: (id) => deals.find((d) => d.id === id),
+    getDealsForListing: (listingId) =>
+      deals
+        .filter((d) => d.listingId === listingId)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     getDealsForThread: (listingId, buyerId, sellerId) =>
       deals
         .filter((d) => d.listingId === listingId && d.buyerId === buyerId && d.sellerId === sellerId)

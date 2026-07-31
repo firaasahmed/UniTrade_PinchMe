@@ -178,7 +178,7 @@ export function BrowsePage({ kind }: { kind: ListingKind }) {
             </div>
           </div>
 
-          <ResultsList state={state} results={results} services={kind === "service"} onReset={reset} />
+          <ResultsList state={state} results={results} services={kind === "service"} kind={kind} onReset={reset} />
         </div>
       </div>
     </div>

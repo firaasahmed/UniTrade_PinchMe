@@ -20,6 +20,13 @@ export interface Repository {
   // credentials live beside the user, never on it, so a hash can't leak through a view
   getPasswordHash(userId: string): string | undefined;
   setPasswordHash(userId: string, hash: string): void;
+  // the pinch payer this user maps to under a given merchant, so we upsert one record
+  // instead of a new one per payment. merchantId is "" for our own account
+  getPinchPayerId(userId: string, merchantId: string): string | undefined;
+  setPinchPayerId(userId: string, merchantId: string, payerId: string): void;
+  // the managed merchant a seller is paid through; absent until they register
+  getPinchMerchantId(userId: string): string | undefined;
+  setPinchMerchantId(userId: string, merchantId: string): void;
   updateUser(id: string, patch: UserPatch): User | undefined;
 
   getListings(filter?: ListingFilter): ListingRow[];
@@ -51,6 +58,7 @@ export interface Repository {
 
   getDeal(id: string): DealRow | undefined;
   getDealsForThread(listingId: string, buyerId: string, sellerId: string): DealRow[];
+  getDealsForListing(listingId: string): DealRow[];
   getDealsForUser(userId: string): DealRow[];
   createDeal(buyerId: string, sellerId: string, proposedBy: string, input: NewDeal): DealRow;
   updateDealStatus(id: string, status: DealStatus): DealRow | undefined;

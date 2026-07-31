@@ -5,7 +5,8 @@ import type { Repository } from "../repository.ts";
 import type { SeedData } from "../seed/index.ts";
 import type { University } from "../../../src/types/University.ts";
 import type { User, NewUser, UserPatch } from "../../../src/types/User.ts";
-import type { ListingRow, NewListing, ListingPatch, ListingFilter } from "../../../src/types/Listing.ts";
+import type { ListingRow, NewListing, ListingPatch, ListingFilter, TransitLink } from "../../../src/types/Listing.ts";
+import type { InspectionAvailability } from "../../../src/types/Inspection.ts";
 import type { Booking, NewBooking, BookingStatus } from "../../../src/types/Booking.ts";
 import type { Message, NewMessage } from "../../../src/types/Message.ts";
 import type { Notification, NewNotification } from "../../../src/types/Notification.ts";
@@ -121,6 +122,11 @@ export function createSqliteRepository(
     availableFrom: optStr(r.availableFrom),
     leaseTerm: optStr(r.leaseTerm),
     furnished: optBool(r.furnished),
+    transit: r.transit == null ? undefined : json<TransitLink[]>(r.transit, []),
+    inspectionAvailability:
+      r.inspectionAvailability == null
+        ? undefined
+        : json<InspectionAvailability | undefined>(r.inspectionAvailability, undefined),
     createdAt: str(r.createdAt),
     updatedAt: str(r.updatedAt),
   });
@@ -165,6 +171,7 @@ export function createSqliteRepository(
     kind: str(r.kind) as DealRow["kind"],
     amountCents: optNum(r.amountCents),
     scheduledFor: optStr(r.scheduledFor),
+    scheduledAt: optStr(r.scheduledAt),
     note: str(r.note),
     proposedBy: str(r.proposedBy),
     status: str(r.status) as DealStatus,
@@ -245,6 +252,28 @@ export function createSqliteRepository(
     setPasswordHash: (userId, hash) => {
       run("UPDATE users SET passwordHash = ? WHERE id = ?", hash, userId);
     },
+    getPinchPayerId: (userId, merchantId) =>
+      optStr(
+        one(
+          "SELECT payerId FROM pinch_payers WHERE userId = ? AND merchantId = ?",
+          userId,
+          merchantId,
+        )?.payerId,
+      ),
+    setPinchPayerId: (userId, merchantId, payerId) => {
+      run(
+        `INSERT INTO pinch_payers (userId, merchantId, payerId) VALUES (?,?,?)
+         ON CONFLICT(userId, merchantId) DO UPDATE SET payerId = excluded.payerId`,
+        userId,
+        merchantId,
+        payerId,
+      );
+    },
+    getPinchMerchantId: (userId) =>
+      optStr(one("SELECT pinchMerchantId FROM users WHERE id = ?", userId)?.pinchMerchantId),
+    setPinchMerchantId: (userId, merchantId) => {
+      run("UPDATE users SET pinchMerchantId = ? WHERE id = ?", merchantId, userId);
+    },
     updateUser: (id, patch: UserPatch) => {
       if (patch.name !== undefined) run("UPDATE users SET name = ? WHERE id = ?", patch.name, id);
       if (patch.location !== undefined) run("UPDATE users SET location = ? WHERE id = ?", patch.location, id);
@@ -313,12 +342,14 @@ export function createSqliteRepository(
         availableFrom: input.availableFrom,
         leaseTerm: input.leaseTerm,
         furnished: input.furnished,
+        transit: input.transit,
+        inspectionAvailability: input.inspectionAvailability,
         createdAt: now,
         updatedAt: now,
       };
       run(
-        `INSERT INTO listings (id,sellerId,title,description,priceCents,rateUnit,category,condition,location,lat,lng,meetup,imageUrl,images,unlimited,status,bedrooms,bathrooms,bondCents,availableFrom,leaseTerm,furnished,createdAt,updatedAt)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        `INSERT INTO listings (id,sellerId,title,description,priceCents,rateUnit,category,condition,location,lat,lng,meetup,imageUrl,images,unlimited,status,bedrooms,bathrooms,bondCents,availableFrom,leaseTerm,furnished,transit,inspectionAvailability,createdAt,updatedAt)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         row.id,
         row.sellerId,
         row.title,
@@ -341,6 +372,8 @@ export function createSqliteRepository(
         b(row.availableFrom),
         b(row.leaseTerm),
         bBool(row.furnished),
+        row.transit ? JSON.stringify(row.transit) : null,
+        row.inspectionAvailability ? JSON.stringify(row.inspectionAvailability) : null,
         row.createdAt,
         row.updatedAt,
       );
@@ -372,6 +405,13 @@ export function createSqliteRepository(
       if ("bondCents" in patch) put("bondCents", b(patch.bondCents));
       if ("availableFrom" in patch) put("availableFrom", b(patch.availableFrom));
       if ("leaseTerm" in patch) put("leaseTerm", b(patch.leaseTerm));
+      if ("transit" in patch) put("transit", patch.transit ? JSON.stringify(patch.transit) : null);
+      if ("inspectionAvailability" in patch) {
+        put(
+          "inspectionAvailability",
+          patch.inspectionAvailability ? JSON.stringify(patch.inspectionAvailability) : null,
+        );
+      }
       if ("furnished" in patch) put("furnished", bBool(patch.furnished));
       put("updatedAt", clock());
       args.push(id);
@@ -525,6 +565,10 @@ export function createSqliteRepository(
       const r = one("SELECT * FROM deals WHERE id = ?", id);
       return r ? toDeal(r) : undefined;
     },
+    getDealsForListing: (listingId) =>
+      all(`SELECT * FROM deals WHERE listingId = ? ORDER BY createdAt ASC, id ASC`, listingId).map(
+        toDeal,
+      ),
     getDealsForThread: (listingId, buyerId, sellerId) =>
       all(
         `SELECT * FROM deals WHERE listingId = ? AND buyerId = ? AND sellerId = ?
@@ -549,6 +593,7 @@ export function createSqliteRepository(
         kind: input.kind,
         amountCents: input.amountCents,
         scheduledFor: input.scheduledFor,
+        scheduledAt: input.scheduledAt,
         note: input.note,
         proposedBy,
         status: "pending",
@@ -557,8 +602,8 @@ export function createSqliteRepository(
         updatedAt: now,
       };
       run(
-        `INSERT INTO deals (id,listingId,buyerId,sellerId,kind,amountCents,scheduledFor,note,proposedBy,status,paidAt,createdAt,updatedAt)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        `INSERT INTO deals (id,listingId,buyerId,sellerId,kind,amountCents,scheduledFor,scheduledAt,note,proposedBy,status,paidAt,createdAt,updatedAt)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         row.id,
         row.listingId,
         row.buyerId,
@@ -566,6 +611,7 @@ export function createSqliteRepository(
         row.kind,
         b(row.amountCents),
         b(row.scheduledFor),
+        b(row.scheduledAt),
         row.note,
         row.proposedBy,
         row.status,
@@ -602,10 +648,38 @@ function migrate(db: DatabaseSync, seed: SeedData): void {
     for (const l of seed.listings) if (l.leaseTerm) fill.run(l.leaseTerm, l.id);
   }
 
+  if (!columns("listings").includes("transit")) {
+    db.exec("ALTER TABLE listings ADD COLUMN transit TEXT");
+    const fill = db.prepare("UPDATE listings SET transit = ? WHERE id = ? AND transit IS NULL");
+    for (const l of seed.listings) if (l.transit) fill.run(JSON.stringify(l.transit), l.id);
+  }
+
+  if (!columns("listings").includes("inspectionAvailability")) {
+    db.exec("ALTER TABLE listings ADD COLUMN inspectionAvailability TEXT");
+    const fill = db.prepare(
+      "UPDATE listings SET inspectionAvailability = ? WHERE id = ? AND inspectionAvailability IS NULL",
+    );
+    for (const l of seed.listings) {
+      if (l.inspectionAvailability) fill.run(JSON.stringify(l.inspectionAvailability), l.id);
+    }
+  }
+
+  if (!columns("deals").includes("scheduledAt")) {
+    db.exec("ALTER TABLE deals ADD COLUMN scheduledAt TEXT");
+  }
+
   if (!columns("users").includes("passwordHash")) {
     db.exec("ALTER TABLE users ADD COLUMN passwordHash TEXT");
     // accounts that predate passwords get the shared demo one so they can still sign in
     db.prepare("UPDATE users SET passwordHash = ? WHERE passwordHash IS NULL").run(SEED_PASSWORD_HASH);
+  }
+
+  if (!columns("users").includes("pinchPayerId")) {
+    db.exec("ALTER TABLE users ADD COLUMN pinchPayerId TEXT");
+  }
+
+  if (!columns("users").includes("pinchMerchantId")) {
+    db.exec("ALTER TABLE users ADD COLUMN pinchMerchantId TEXT");
   }
 }
 
@@ -634,8 +708,8 @@ function seedIfEmpty(db: DatabaseSync, seed: SeedData): void {
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
   );
   const insertListing = db.prepare(
-    `INSERT INTO listings (id,sellerId,title,description,priceCents,rateUnit,category,condition,location,lat,lng,meetup,imageUrl,images,unlimited,status,bedrooms,bathrooms,bondCents,availableFrom,leaseTerm,furnished,createdAt,updatedAt)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO listings (id,sellerId,title,description,priceCents,rateUnit,category,condition,location,lat,lng,meetup,imageUrl,images,unlimited,status,bedrooms,bathrooms,bondCents,availableFrom,leaseTerm,furnished,transit,inspectionAvailability,createdAt,updatedAt)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
   );
 
   db.exec("BEGIN");
@@ -683,6 +757,8 @@ function seedIfEmpty(db: DatabaseSync, seed: SeedData): void {
         b(l.availableFrom),
         b(l.leaseTerm),
         bBool(l.furnished),
+        l.transit ? JSON.stringify(l.transit) : null,
+        l.inspectionAvailability ? JSON.stringify(l.inspectionAvailability) : null,
         l.createdAt,
         l.updatedAt,
       );

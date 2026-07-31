@@ -16,6 +16,7 @@ import { MessagesPage } from "@/pages/MessagesPage";
 import { NotificationsPage } from "@/pages/NotificationsPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { AccountPage } from "@/pages/AccountPage";
+import { PayoutsPage } from "@/pages/PayoutsPage";
 import { RequireAuth } from "@/ui/RequireAuth";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/profile/:id" element={<ProfilePage />} />
         <Route path="/account" element={<AccountPage />} />
+        <Route path="/payouts" element={<PayoutsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="*" element={<NotFoundPage />} />

@@ -11,6 +11,8 @@ export default defineConfig({
     },
   },
   server: {
+    // PORT lets a harness place the dev server somewhere free; the api keeps 3001 via API_PORT
+    port: Number(process.env.PORT) || 5173,
     proxy: {
       "/api": "http://localhost:3001",
     },

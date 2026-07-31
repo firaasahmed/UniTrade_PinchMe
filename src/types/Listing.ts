@@ -1,6 +1,17 @@
 import type { PublicUser } from "./User.ts";
+import type { InspectionAvailability } from "./Inspection.ts";
 
 export type ListingStatus = "active" | "draft" | "sold" | "removed";
+
+export type TransitMode = "walk" | "bus" | "train" | "tram" | "ferry";
+
+// how you actually get around from here — stated by the host, never computed by us
+export type TransitLink = {
+  mode: TransitMode;
+  // what it gets you to, e.g. "Carlton tram stop" or "campus"
+  to: string;
+  minutes: number;
+};
 
 // the stored row — normalised, seller referenced by id
 export type ListingRow = {
@@ -32,6 +43,8 @@ export type ListingRow = {
   // how long the lease runs, e.g. "6 months" — open string, presets in the UI
   leaseTerm?: string;
   furnished?: boolean;
+  transit?: TransitLink[];
+  inspectionAvailability?: InspectionAvailability;
   createdAt: string;
   updatedAt: string;
 };
@@ -59,6 +72,8 @@ export type NewListing = {
   availableFrom?: string;
   leaseTerm?: string;
   furnished?: boolean;
+  transit?: TransitLink[];
+  inspectionAvailability?: InspectionAvailability;
   // "active" (published) or "draft"; defaults to active when absent
   status?: Extract<ListingStatus, "active" | "draft">;
 };

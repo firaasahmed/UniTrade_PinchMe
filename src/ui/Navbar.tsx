@@ -51,10 +51,16 @@ function SearchBox({
   onDark?: boolean;
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [q, setQ] = useState("");
   function submit(e: FormEvent) {
     e.preventDefault();
-    navigate(q.trim() ? `/buy?q=${encodeURIComponent(q.trim())}` : "/buy");
+    const query = q.trim();
+    let basePath = "/items";
+    if (location.pathname.startsWith("/services")) basePath = "/services";
+    else if (location.pathname.startsWith("/accommodation")) basePath = "/accommodation";
+
+    navigate(query ? `${basePath}?q=${encodeURIComponent(query)}` : basePath);
     onSubmit?.();
   }
   return (
@@ -86,9 +92,19 @@ export function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const signedIn = state.status === "signedIn";
+  // no point offering "add listing" to someone already filling that form
+  const onCreatePage =
+    location.pathname.startsWith("/sell/new") || location.pathname.startsWith("/sell/edit");
+  const isNonStickyPage =
+    onCreatePage || location.pathname.startsWith("/messages");
 
   return (
-    <header className="sticky top-0 z-30 bg-gradient-to-r from-[rgb(32,22,109)] to-[rgb(1,7,95)] text-primary-foreground shadow-md">
+    <header
+      className={cn(
+        "z-30 bg-gradient-to-r from-[rgb(32,22,109)] to-[rgb(1,7,95)] text-primary-foreground shadow-md",
+        isNonStickyPage ? "relative" : "sticky top-0",
+      )}
+    >
       {/* unit-main layout: brand left, nav centred, actions right */}
       <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-4 pb-3 pt-4 lg:grid-cols-[1fr_auto_1fr]">
         <Link
@@ -102,29 +118,33 @@ export function Navbar() {
         <nav className="hidden justify-self-center lg:flex lg:items-center lg:gap-1">
           <BrowseMenu active={BROWSE_LINKS.some((l) => l.to === location.pathname)} />
           <NavItem to="/deals" label="Student deals" icon={Sparkles} active={location.pathname === "/deals"} />
-          <Button
-            asChild
-            size="sm"
-            className="ml-2 bg-gold font-semibold text-gold-foreground hover:bg-gold/90"
-          >
-            <Link to="/sell/new">
-              <Plus className="size-4" />
-              Add listing
-            </Link>
-          </Button>
+          {!onCreatePage && (
+            <Button
+              asChild
+              size="sm"
+              className="ml-2 bg-gold font-semibold text-gold-foreground hover:bg-gold/90"
+            >
+              <Link to="/sell/new">
+                <Plus className="size-4" />
+                Add listing
+              </Link>
+            </Button>
+          )}
         </nav>
 
         <div className="flex items-center gap-2 justify-self-end">
-          <Button
-            asChild
-            size="sm"
-            className="bg-gold font-semibold text-gold-foreground hover:bg-gold/90 sm:inline-flex lg:hidden"
-          >
-            <Link to="/sell/new">
-              <Plus className="size-4" />
-              <span className="hidden sm:inline">Add listing</span>
-            </Link>
-          </Button>
+          {!onCreatePage && (
+            <Button
+              asChild
+              size="sm"
+              className="bg-gold font-semibold text-gold-foreground hover:bg-gold/90 sm:inline-flex lg:hidden"
+            >
+              <Link to="/sell/new">
+                <Plus className="size-4" />
+                <span className="hidden sm:inline">Add listing</span>
+              </Link>
+            </Button>
+          )}
 
           {signedIn ? (
             <>
@@ -152,9 +172,12 @@ export function Navbar() {
         </div>
       </div>
 
-      <div className="mx-auto hidden max-w-3xl px-4 pb-4 md:block">
-        <SearchBox onDark />
-      </div>
+      {/* the listing form needs the vertical space more than it needs search */}
+      {!location.pathname.startsWith("/sell/new") && !location.pathname.startsWith("/sell/edit") && (
+        <div className="mx-auto hidden max-w-3xl px-4 pb-4 md:block">
+          <SearchBox onDark />
+        </div>
+      )}
     </header>
   );
 }

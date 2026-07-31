@@ -13,6 +13,9 @@ export function publicUser(sellerId: string): PublicUser {
     university,
     verified: user?.verified ?? false,
     orgType: user?.orgType,
+    // presence of a merchant is enough — reading pinch per listing would put a
+    // network call on every grid render, and the checkout guard is the real gate
+    payoutReady: Boolean(user && repo.getPinchMerchantId(user.id)),
   };
 }
 

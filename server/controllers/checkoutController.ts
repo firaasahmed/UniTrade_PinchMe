@@ -47,6 +47,7 @@ type CheckoutBody = {
   email?: unknown;
   description?: unknown;
   dealId?: unknown;
+  attempt?: unknown;
 };
 
 // preserves the proven checkout contract: 400 on missing fields, 404 on unknown listing,
@@ -68,8 +69,10 @@ export async function create(req: Request, res: Response): Promise<void> {
         email: typeof body.email === "string" ? body.email : undefined,
         description: typeof body.description === "string" ? body.description : undefined,
         dealId: typeof body.dealId === "string" ? body.dealId : undefined,
+        // a deliberate retry after a decline; anything else collapses onto one charge
+        attempt: typeof body.attempt === "number" ? body.attempt : undefined,
       },
-      req.user?.id,
+      requireUser(req),
     );
     res.json(result);
   } catch (err) {

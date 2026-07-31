@@ -1,4 +1,6 @@
-import type { NewListing, ListingPatch, ListingStatus } from "../../src/types/Listing.ts";
+import type { NewListing, ListingPatch, ListingStatus, TransitLink, TransitMode } from "../../src/types/Listing.ts";
+import type { InspectionAvailability } from "../../src/types/Inspection.ts";
+import { DEFAULT_HORIZON_DAYS } from "../../src/types/Inspection.ts";
 import { ValidationError } from "../lib/errors.ts";
 
 function asRecord(body: unknown): Record<string, unknown> {
@@ -34,6 +36,51 @@ function strArray(v: unknown): string[] | undefined {
 }
 
 const STATUSES: ListingStatus[] = ["active", "draft", "sold", "removed"];
+
+const MODES: TransitMode[] = ["walk", "bus", "train", "tram", "ferry"];
+
+// the host's weekly inspection pattern — malformed parts are dropped, never fatal
+function availability(v: unknown): InspectionAvailability | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const r = v as Record<string, unknown>;
+  const weekdays = Array.isArray(r.weekdays)
+    ? [...new Set(r.weekdays.filter((d): d is number => typeof d === "number" && d >= 0 && d <= 6))].sort()
+    : [];
+  const times = Array.isArray(r.times)
+    ? [...new Set(r.times.filter((t): t is string => typeof t === "string" && /^\d{2}:\d{2}$/.test(t)))].sort()
+    : [];
+  const blackout = Array.isArray(r.blackout)
+    ? r.blackout.filter((d): d is string => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d))
+    : [];
+  const horizon = num(r.horizonDays);
+  return {
+    weekdays,
+    times,
+    horizonDays:
+      horizon !== undefined && Number.isInteger(horizon) && horizon > 0 && horizon <= 90
+        ? horizon
+        : DEFAULT_HORIZON_DAYS,
+    blackout,
+    acceptsRequests: r.acceptsRequests !== false,
+  };
+}
+
+// host-stated travel times — anything malformed is dropped rather than failing the listing
+function transitArray(v: unknown): TransitLink[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: TransitLink[] = [];
+  for (const x of v) {
+    if (!x || typeof x !== "object") continue;
+    const r = x as Record<string, unknown>;
+    const mode = str(r.mode)?.trim() as TransitMode | undefined;
+    const to = str(r.to)?.trim();
+    const minutes = num(r.minutes);
+    if (!mode || !MODES.includes(mode) || !to) continue;
+    if (minutes === undefined || !Number.isInteger(minutes) || minutes <= 0 || minutes > 240) continue;
+    out.push({ mode, to, minutes });
+  }
+  return out.length ? out : undefined;
+}
 
 export function parseNewListing(body: unknown): NewListing {
   const b = asRecord(body);
@@ -78,6 +125,8 @@ export function parseNewListing(body: unknown): NewListing {
     bondCents: intCents(b.bondCents),
     availableFrom: str(b.availableFrom)?.trim() || undefined,
     leaseTerm: str(b.leaseTerm)?.trim() || undefined,
+    transit: transitArray(b.transit),
+    inspectionAvailability: availability(b.inspectionAvailability),
     furnished: typeof b.furnished === "boolean" ? b.furnished : undefined,
     status: isDraft ? "draft" : undefined,
   };
@@ -136,6 +185,10 @@ export function parseListingPatch(body: unknown): ListingPatch {
   if ("bondCents" in b) patch.bondCents = intCents(b.bondCents);
   if ("availableFrom" in b) patch.availableFrom = str(b.availableFrom)?.trim() || undefined;
   if ("leaseTerm" in b) patch.leaseTerm = str(b.leaseTerm)?.trim() || undefined;
+  if ("transit" in b) patch.transit = transitArray(b.transit);
+  if ("inspectionAvailability" in b) {
+    patch.inspectionAvailability = availability(b.inspectionAvailability);
+  }
   if ("furnished" in b) patch.furnished = typeof b.furnished === "boolean" ? b.furnished : undefined;
 
   if (errors.length) throw new ValidationError(errors.join("; "));

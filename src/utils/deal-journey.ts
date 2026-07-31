@@ -46,7 +46,7 @@ export const JOURNEYS: Record<ListingKind, Journey> = {
     deal: "inspection",
     openedBy: "buyer",
     cta: "Book an inspection",
-    ctaHint: "Arrange a viewing first. No money changes hands on UniTrade",
+    ctaHint: "",
     dialogTitle: "Request an inspection",
     amountLabel: null,
     timeLabel: "Preferred time",

@@ -3,7 +3,7 @@ import type { BookingView } from "../../src/types/Booking.ts";
 import type { User } from "../../src/types/User.ts";
 import { getListingView } from "./listingsService.ts";
 import { systemClock } from "../lib/clock.ts";
-import { createRefund } from "../pinch.ts";
+import { createRefund } from "../payments/index.ts";
 import { NotFoundError, ForbiddenError, ValidationError } from "../lib/errors.ts";
 
 function enrich(listingId: string): BookingView["listing"] | null {

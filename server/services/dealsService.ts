@@ -3,6 +3,9 @@ import type { DealRow, DealView, DealActions, NewDeal, DealKind } from "../../sr
 import { isLive, isPayable } from "../../src/types/Deal.ts";
 import type { User } from "../../src/types/User.ts";
 import { publicUser } from "./listingsService.ts";
+import { assertSlotBookable, assertRequestAllowed } from "./inspectionsService.ts";
+import { systemClock } from "../lib/clock.ts";
+import { formatSlot } from "../../src/utils/format-slot.ts";
 import { NotFoundError, ForbiddenError, ValidationError } from "../lib/errors.ts";
 
 // which deal kind a listing accepts — one journey per listing kind
@@ -56,12 +59,17 @@ function counterparty(deal: DealRow): string {
   return deal.proposedBy === deal.buyerId ? deal.sellerId : deal.buyerId;
 }
 
+// a picked slot reads as a real date; an off-pattern ask reads as whatever they typed
+function whenOf(deal: Pick<DealRow, "scheduledAt" | "scheduledFor">): string | undefined {
+  return deal.scheduledAt ? formatSlot(deal.scheduledAt) : deal.scheduledFor;
+}
+
 // human line dropped into the thread whenever a proposal is made
 function describe(deal: DealRow, note: string): string {
   const money = deal.amountCents !== undefined ? `$${(deal.amountCents / 100).toFixed(2)}` : "";
   const head =
     deal.kind === "inspection"
-      ? `Requested an inspection for ${deal.scheduledFor ?? "a time that suits"}`
+      ? `Requested an inspection for ${whenOf(deal) ?? "a time that suits"}`
       : deal.kind === "quote"
         ? `Sent a quote: ${money}${deal.scheduledFor ? ` for ${deal.scheduledFor}` : ""}`
         : `Offered ${money}`;
@@ -101,7 +109,14 @@ export function createDeal(user: User, input: NewDeal): DealView {
 
   if (input.kind === "inspection") {
     if (input.amountCents !== undefined) throw new ValidationError("inspections don't take a payment");
-    if (!input.scheduledFor?.trim()) throw new ValidationError("suggest a time for the inspection");
+    // a picked slot has to still be free; an off-pattern ask only needs words
+    if (input.scheduledAt) {
+      assertSlotBookable(listing.id, input.scheduledAt, systemClock().slice(0, 10));
+    } else if (input.scheduledFor?.trim()) {
+      assertRequestAllowed(listing.id);
+    } else {
+      throw new ValidationError("pick a time or suggest one");
+    }
   } else {
     if (input.amountCents === undefined || !Number.isInteger(input.amountCents) || input.amountCents <= 0) {
       throw new ValidationError("amountCents must be a positive integer");
@@ -134,7 +149,7 @@ export function createDeal(user: User, input: NewDeal): DealView {
       fromName: user.name,
       preview:
         input.kind === "inspection"
-          ? `Inspection requested for ${input.scheduledFor ?? ""}`
+          ? `Inspection requested for ${whenOf(input) ?? ""}`
           : `${input.kind === "quote" ? "Quote" : "Offer"}: $${((input.amountCents ?? 0) / 100).toFixed(2)}`,
     },
   });

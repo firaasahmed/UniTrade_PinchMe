@@ -1,5 +1,14 @@
 import { repo } from "../data/index.ts";
-import { createRealtimePayment, createPaymentLink, getPayment } from "../pinch.ts";
+import {
+  createRealtimePayment,
+  createPaymentLink,
+  findByNonce,
+  nonceFor,
+  savePayer,
+  getPayment,
+  type PaymentMetadata,
+} from "../payments/index.ts";
+import { payoutGuard, platformFeeCents } from "./merchantsService.ts";
 import type { ListingRow } from "../../src/types/Listing.ts";
 import type { User } from "../../src/types/User.ts";
 import type { CheckoutResult } from "../../src/types/CheckoutResult.ts";
@@ -15,11 +24,18 @@ export type CheckoutInput = {
   description?: string;
   // an accepted offer/quote — the agreed price wins over the list price
   dealId?: string;
+  // 1 for the first try; the payer bumps it only when retrying a declined card
+  attempt?: number;
 };
 
-// amount comes from the listing, never trusted from the client
-// buyerId (when signed in) drives escrow: a money-moved outcome opens a HELD booking
-export async function checkout(input: CheckoutInput, buyerId?: string): Promise<CheckoutResult> {
+// a retry has to be a deliberate act, so cap it rather than trust an arbitrary number
+const MAX_ATTEMPTS = 10;
+
+// amount comes from the listing, never trusted from the client.
+// the buyer must be signed in — the money routes to a seller's own merchant, so
+// there has to be a payer record on their side of it
+export async function checkout(input: CheckoutInput, buyer: User): Promise<CheckoutResult> {
+  const buyerId = buyer.id;
   const listing = repo.getListing(input.listingId);
   if (!listing) throw new NotFoundError("listing not found");
 
@@ -40,13 +56,43 @@ export async function checkout(input: CheckoutInput, buyerId?: string): Promise<
     amountCents = deal.amountCents as number;
   }
 
-  const result = await createRealtimePayment({
-    token: input.token,
-    amountCents,
-    fullName: input.fullName,
-    email: input.email,
-    description: input.description ?? listing.title,
+  // the seller must be able to receive the money before anyone is charged for it
+  const onBehalfOf = await payoutGuard(listing);
+  const applicationFeeCents = platformFeeCents(listing, amountCents);
+
+  const attempt = input.attempt ?? 1;
+  if (!Number.isInteger(attempt) || attempt < 1 || attempt > MAX_ATTEMPTS) {
+    throw new ValidationError("invalid payment attempt");
+  }
+
+  // the idempotency key: same buyer, same deal, same attempt is always the same charge
+  const nonce = nonceFor({
+    subjectId: deal?.id ?? listing.id,
+    buyerId: buyerId ?? "guest",
+    attempt,
   });
+  const metadata: PaymentMetadata = { listingId: listing.id, dealId: deal?.id, buyerId };
+
+  let result: CheckoutResult;
+  try {
+    result = await createRealtimePayment({
+      token: input.token,
+      amountCents,
+      nonce,
+      metadata,
+      onBehalfOf,
+      payerId: await payerIdFor(buyer, onBehalfOf),
+      applicationFeeCents,
+      description: input.description ?? listing.title,
+    });
+  } catch (e) {
+    // any failure at all, ask pinch what this nonce already did. a timeout means we
+    // never learned the outcome; a replay rejection means this exact charge already
+    // succeeded. either way the answer is the first payment, never a second one
+    const existing = await findByNonce(nonce, onBehalfOf).catch(() => null);
+    if (!existing) throw e;
+    result = existing;
+  }
 
   settle(result, listing.id, buyerId, amountCents, deal?.id);
   return result;
@@ -99,16 +145,33 @@ export async function startHostedCheckout(
   origin: string,
 ): Promise<{ url: string }> {
   const { listing, amountCents, deal } = resolve(listingId, dealId, user.id);
+  // same guard as the card path — no link is issued for a seller who can't be paid
+  const onBehalfOf = await payoutGuard(listing);
   const back = new URLSearchParams({ listing: listing.id });
   if (deal) back.set("deal", deal.id);
   const { url } = await createPaymentLink({
     amountCents,
     description: listing.title,
     returnUrl: `${origin}/checkout/return?${back.toString()}`,
-    payerName: user.name,
-    payerEmail: user.email,
+    payerId: await payerIdFor(user, onBehalfOf),
+    onBehalfOf,
+    metadata: { listingId: listing.id, dealId: deal?.id, buyerId: user.id },
   });
   return { url };
+}
+
+// one pinch payer per student per merchant, created once and reused. a payer belongs
+// to the merchant it was made under, so buying from two agencies means two records
+async function payerIdFor(user: User, merchantId: string): Promise<string> {
+  const known = repo.getPinchPayerId(user.id, merchantId);
+  const payerId = await savePayer({
+    name: user.name,
+    email: user.email,
+    existingId: known,
+    onBehalfOf: merchantId || undefined,
+  });
+  if (payerId !== known) repo.setPinchPayerId(user.id, merchantId, payerId);
+  return payerId;
 }
 
 // the payer is back from pinch: ask pinch what happened, then settle on that
@@ -118,8 +181,9 @@ export async function confirmHostedCheckout(
   dealId: string | undefined,
   paymentId: string,
 ): Promise<CheckoutResult> {
-  const { amountCents, deal } = resolve(listingId, dealId, user.id);
-  const result = await getPayment(paymentId);
+  const { listing, amountCents, deal } = resolve(listingId, dealId, user.id);
+  // the payment lives under the seller's merchant, so it needs their header to read
+  const result = await getPayment(paymentId, await payoutGuard(listing));
   settle(result, listingId, user.id, amountCents, deal?.id);
   return result;
 }
