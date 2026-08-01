@@ -9,6 +9,7 @@ import { CreateListingPage } from "@/pages/CreateListingPage";
 import { SellLayout } from "@/layouts/SellLayout";
 import { ManageListings } from "@/pages/Sell/ManageListings";
 import { MyPurchases } from "@/pages/Sell/MyPurchases";
+import { MySales } from "@/pages/Sell/MySales";
 import { WatchlistPage } from "@/pages/WatchlistPage";
 import { BrowsePage } from "@/pages/BrowsePage";
 import { DealsPage } from "@/pages/DealsPage";
@@ -47,6 +48,7 @@ export default function App() {
         >
           <Route index element={<ManageListings />} />
           <Route path="purchases" element={<MyPurchases />} />
+          <Route path="sales" element={<MySales />} />
         </Route>
         <Route path="/watchlist" element={<WatchlistPage />} />
         <Route path="/messages" element={<MessagesPage />} />

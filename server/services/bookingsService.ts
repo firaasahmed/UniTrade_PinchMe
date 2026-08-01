@@ -22,6 +22,18 @@ export function listPurchases(buyerId: string): BookingView[] {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+// the other side of the same table: what this seller has actually been paid for
+export function listSales(sellerId: string): BookingView[] {
+  return repo
+    .getBookingsForSeller(sellerId)
+    .map((b) => {
+      const listing = enrich(b.listingId);
+      return listing ? { ...b, listing } : null;
+    })
+    .filter((x): x is BookingView => x !== null)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 // buyer pulls out before confirming: refund through pinch, then put the item back up
 export async function refundBooking(user: User, bookingId: string): Promise<BookingView> {
   const booking = repo.getBooking(bookingId);

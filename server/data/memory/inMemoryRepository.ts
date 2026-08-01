@@ -179,6 +179,7 @@ export function createInMemoryRepository(seed: SeedData, clock: Clock = systemCl
     getBooking: (id) => bookings.find((b) => b.id === id),
     getBookingByPayment: (pinchPaymentId) => bookings.find((b) => b.pinchPaymentId === pinchPaymentId),
     getBookingsForBuyer: (buyerId) => bookings.filter((b) => b.buyerId === buyerId),
+    getBookingsForSeller: (sellerId) => bookings.filter((b) => b.sellerId === sellerId),
     createBooking: (input: NewBooking) => {
       const booking: Booking = {
         id: `bkg${counters.booking++}`,

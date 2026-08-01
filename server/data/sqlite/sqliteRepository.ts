@@ -436,6 +436,8 @@ export function createSqliteRepository(
     },
     getBookingsForBuyer: (buyerId) =>
       all("SELECT * FROM bookings WHERE buyerId = ? ORDER BY createdAt DESC", buyerId).map(toBooking),
+    getBookingsForSeller: (sellerId) =>
+      all("SELECT * FROM bookings WHERE sellerId = ? ORDER BY createdAt DESC", sellerId).map(toBooking),
     createBooking: (input: NewBooking) => {
       const booking: Booking = {
         id: nextId("bookings", "bkg"),

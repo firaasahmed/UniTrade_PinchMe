@@ -7,6 +7,12 @@ export async function getPurchases(): Promise<BookingView[]> {
   return (await res.json()) as BookingView[];
 }
 
+export async function getSales(): Promise<BookingView[]> {
+  const res = await apiFetch("/api/me/sales");
+  if (!res.ok) throw new Error("couldn't load your sales");
+  return (await res.json()) as BookingView[];
+}
+
 export async function refundPurchase(bookingId: string): Promise<BookingView> {
   const res = await apiFetch(`/api/me/purchases/${bookingId}/refund`, { method: "POST" });
   if (!res.ok) throw new Error(await errorMessage(res, "failed to refund"));

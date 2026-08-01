@@ -1,10 +1,11 @@
 import { NavLink, Outlet, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Package, ShoppingBag, Plus } from "lucide-react";
+import { Package, ShoppingBag, Plus, Wallet } from "lucide-react";
 
 const LINKS = [
   { to: "/sell", label: "My listings", icon: Package, end: true },
+  { to: "/sell/sales", label: "Sales", icon: Wallet, end: false },
   { to: "/sell/purchases", label: "My purchases", icon: ShoppingBag, end: false },
 ];
 

@@ -23,6 +23,11 @@ export function purchases(req: Request, res: Response): void {
   res.json(bookings.listPurchases(user.id));
 }
 
+export function sales(req: Request, res: Response): void {
+  const user = requireUser(req);
+  res.json(bookings.listSales(user.id));
+}
+
 export async function refundPurchase(req: Request, res: Response): Promise<void> {
   const user = requireUser(req);
   res.json(await bookings.refundBooking(user, param(req, "id")));

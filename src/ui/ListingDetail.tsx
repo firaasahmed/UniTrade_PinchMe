@@ -107,6 +107,9 @@ function Loaded({ listing }: { listing: Listing }) {
   const me = state.status === "signedIn" ? state.user : null;
   const isOwner = me?.id === listing.sellerId;
   const available = listing.status === "active";
+  // items are handed over in person and take no payment, so they need no merchant.
+  // anything that ends in a charge needs the seller to be able to receive it
+  const sellerCanTransact = kind === "item" || listing.seller.payoutReady;
 
   const journey = journeyFor(kind);
 
@@ -215,18 +218,28 @@ function Loaded({ listing }: { listing: Listing }) {
                   defaultWhen={kind === "item" ? undefined : "This week, whenever suits you"}
                   onDone={() => navigate(`/messages?listing=${listing.id}&user=${listing.sellerId}`)}
                   trigger={
-                    <Button size="lg" className="w-full text-base font-semibold" disabled={!available}>
+                    <Button
+                      size="lg"
+                      className="w-full text-base font-semibold"
+                      disabled={!available || !sellerCanTransact}
+                    >
                       <Handshake className="size-4" />
-                      {available
-                        ? journey.cta
-                        : listing.status === "sold"
+                      {!available
+                        ? listing.status === "sold"
                           ? "Sold"
-                          : "Unavailable"}
+                          : "Unavailable"
+                        : sellerCanTransact
+                          ? journey.cta
+                          : "Not taking bookings yet"}
                     </Button>
                   }
                 />
 
-                <p className="text-center text-xs text-muted-foreground">{journey.ctaHint}</p>
+                <p className="text-center text-xs text-muted-foreground">
+                  {sellerCanTransact
+                    ? journey.ctaHint
+                    : "This seller hasn't finished setting up payments, so they can't be paid yet."}
+                </p>
               </div>
             )}
           </div>

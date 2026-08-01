@@ -38,6 +38,7 @@ export interface Repository {
   getBooking(id: string): Booking | undefined;
   getBookingByPayment(pinchPaymentId: string): Booking | undefined;
   getBookingsForBuyer(buyerId: string): Booking[];
+  getBookingsForSeller(sellerId: string): Booking[];
   createBooking(input: NewBooking): Booking;
   updateBookingStatus(id: string, status: BookingStatus, at: string): Booking | undefined;
 
