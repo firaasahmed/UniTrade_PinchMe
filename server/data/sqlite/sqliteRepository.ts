@@ -16,6 +16,7 @@ import type { Clock } from "../../lib/clock.ts";
 import { systemClock } from "../../lib/clock.ts";
 import { SCHEMA } from "./schema.ts";
 import { SEED_PASSWORD_HASH } from "../seed/users.ts";
+import { SEED_MERCHANTS } from "../seed/merchants.ts";
 
 type Row = Record<string, unknown>;
 type Bindable = string | number | null;
@@ -57,6 +58,7 @@ export function createSqliteRepository(
   migrate(db, seed);
   seedIfEmpty(db, seed);
   seedBrandDeals(db, seed);
+  seedMerchants(db);
 
   const all = (sql: string, ...args: Bindable[]): Row[] => db.prepare(sql).all(...args) as Row[];
   const one = (sql: string, ...args: Bindable[]): Row | undefined =>
@@ -690,6 +692,13 @@ function migrate(db: DatabaseSync, seed: SeedData): void {
   if (!columns("messages").includes("dealId")) {
     db.exec("ALTER TABLE messages ADD COLUMN dealId TEXT");
   }
+}
+
+// sellers arrive already able to be paid — a render instance rebuilds its db every
+// boot, and a seller with no merchant can't take a booking
+function seedMerchants(db: DatabaseSync): void {
+  const fill = db.prepare("UPDATE users SET pinchMerchantId = ? WHERE id = ? AND pinchMerchantId IS NULL");
+  for (const [userId, merchantId] of Object.entries(SEED_MERCHANTS)) fill.run(merchantId, userId);
 }
 
 // brand deals are reference data, so they fill in on any db that lacks them
