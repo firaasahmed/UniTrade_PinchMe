@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { journeyFor } from "@/utils/deal-journey";
+import { categoryKind } from "@/utils/categories";
 import { formatPrice } from "@/utils/format";
 import { formatSlot } from "@/utils/format-slot";
 import { toCents } from "@/utils/money";
@@ -37,6 +39,7 @@ export function ProductDealSidebar({
   listingTitle,
   listingImageUrl,
   listingPriceCents,
+  listingCategory,
   sellerId,
   version = 0,
   onUpdate,
@@ -46,6 +49,7 @@ export function ProductDealSidebar({
   listingTitle: string;
   listingImageUrl: string;
   listingPriceCents?: number;
+  listingCategory?: string;
   sellerId?: string;
   version?: number;
   onUpdate?: () => void;
@@ -54,6 +58,8 @@ export function ProductDealSidebar({
   const meId = state.status === "signedIn" ? state.user.id : "";
   const [deals, setDeals] = useState<DealView[]>([]);
   const [amount, setAmount] = useState("");
+  // what this thread trades in, straight off the listing's category
+  const threadKind = journeyFor(categoryKind(listingCategory ?? "")).deal;
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -98,21 +104,27 @@ export function ProductDealSidebar({
       void run(() => reviseDeal(live.id, { amountCents: cents, note: "" }), "Amount updated");
       return;
     }
+    // the kind follows the listing — sending "offer" on a service was rejected as
+    // "this listing takes a quote, not an offer"
     void run(
       () =>
         createDeal({
           listingId,
-          kind: "offer",
+          kind: threadKind,
           amountCents: cents,
           note: "",
+          // a service booking needs a time; the thread has no picker, so say when loosely
+          scheduledFor: threadKind === "quote" ? "As discussed" : undefined,
           buyerId: isSeller ? otherUserId : undefined,
         }),
-      "Offer sent",
+      threadKind === "quote" ? "Booking sent" : "Offer sent",
     );
   }
 
   const Icon = live?.kind === "inspection" ? CalendarCheck : Handshake;
-  const canReprice = Boolean(can?.canCounter || can?.canRevise);
+  // an inspection is negotiated in times, not amounts, so the money controls don't apply
+  const isInspection = threadKind === "inspection";
+  const canReprice = Boolean((can?.canCounter || can?.canRevise) && !isInspection);
 
   return (
     <aside className="flex flex-col gap-3 lg:max-h-[78vh] lg:overflow-y-auto">
@@ -221,20 +233,39 @@ export function ProductDealSidebar({
             {listingPriceCents !== undefined && (
               <>
                 <p className="text-2xl font-bold text-price">{formatPrice(listingPriceCents)}</p>
-                <p className="text-xs text-muted-foreground">Asking price</p>
+                <p className="text-xs text-muted-foreground">
+                  {threadKind === "inspection" ? "Advertised rent" : "Asking price"}
+                </p>
               </>
             )}
-            <p className="mt-2 text-xs text-muted-foreground">
-              {isSeller ? "Send them a price to lock this in." : "Name your price and see what they say."}
-            </p>
-            <PriceField
-              label={isSeller ? "Your price" : "Your offer"}
-              value={amount}
-              onChange={setAmount}
-              onSubmit={propose}
-              busy={busy}
-              cta={isSeller ? "Send price" : "Send offer"}
-            />
+            {/* an inspection is a time, not a price — the slot picker lives on the listing */}
+            {threadKind === "inspection" ? (
+              <>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Inspections are booked from the times the host has listed.
+                </p>
+                <Button asChild size="sm" className="mt-3 w-full">
+                  <Link to={`/listing/${listingId}`}>
+                    <CalendarCheck className="size-4" />
+                    Pick a time
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {isSeller ? "Send them a price to lock this in." : "Name your price and see what they say."}
+                </p>
+                <PriceField
+                  label={isSeller ? "Your price" : "Your offer"}
+                  value={amount}
+                  onChange={setAmount}
+                  onSubmit={propose}
+                  busy={busy}
+                  cta={isSeller ? "Send price" : "Send offer"}
+                />
+              </>
+            )}
           </div>
         )}
       </div>

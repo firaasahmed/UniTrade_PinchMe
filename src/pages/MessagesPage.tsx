@@ -414,6 +414,7 @@ function Thread({
           listingTitle={ts.thread.listingTitle}
           listingImageUrl={ts.thread.listingImageUrl}
           listingPriceCents={ts.thread.listingPriceCents}
+          listingCategory={ts.thread.listingCategory}
           sellerId={ts.thread.listingSellerId}
           version={version}
           onUpdate={() => load(true)}
