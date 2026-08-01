@@ -172,7 +172,11 @@ type Entry =
 function timeline(messages: Message[], deals: DealView[]): Entry[] {
   const live = deals.filter((d) => d.status !== "countered");
   const entries: Entry[] = [
-    ...messages.map((m): Entry => ({ kind: "message", at: m.createdAt, message: m })),
+    // a deal echo is only there to keep the thread in the inbox — the card says it better,
+    // and unlike the text it stays right when the deal is withdrawn
+    ...messages
+      .filter((m) => m.dealId === undefined)
+      .map((m): Entry => ({ kind: "message", at: m.createdAt, message: m })),
     ...live.map((d): Entry => ({
       kind: "deal",
       at: d.status === "accepted" ? d.updatedAt : d.createdAt,

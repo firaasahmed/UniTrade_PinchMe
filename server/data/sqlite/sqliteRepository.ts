@@ -150,6 +150,7 @@ export function createSqliteRepository(
     senderId: str(r.senderId),
     recipientId: str(r.recipientId),
     body: str(r.body),
+    ...(optStr(r.dealId) ? { dealId: str(r.dealId) } : {}),
     createdAt: str(r.createdAt),
     readAt: nullStr(r.readAt),
   });
@@ -502,17 +503,19 @@ export function createSqliteRepository(
         senderId: input.senderId,
         recipientId: input.recipientId,
         body: input.body,
+        ...(input.dealId ? { dealId: input.dealId } : {}),
         createdAt: clock(),
         readAt: null,
       };
       run(
-        `INSERT INTO messages (id,listingId,senderId,recipientId,body,createdAt,readAt)
-         VALUES (?,?,?,?,?,?,?)`,
+        `INSERT INTO messages (id,listingId,senderId,recipientId,body,dealId,createdAt,readAt)
+         VALUES (?,?,?,?,?,?,?,?)`,
         message.id,
         message.listingId,
         message.senderId,
         message.recipientId,
         message.body,
+        input.dealId ?? null,
         message.createdAt,
         null,
       );
@@ -680,6 +683,10 @@ function migrate(db: DatabaseSync, seed: SeedData): void {
 
   if (!columns("users").includes("pinchMerchantId")) {
     db.exec("ALTER TABLE users ADD COLUMN pinchMerchantId TEXT");
+  }
+
+  if (!columns("messages").includes("dealId")) {
+    db.exec("ALTER TABLE messages ADD COLUMN dealId TEXT");
   }
 }
 

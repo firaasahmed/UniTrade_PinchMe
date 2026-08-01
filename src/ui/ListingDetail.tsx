@@ -55,13 +55,17 @@ const KIND_PATH: Record<ListingKind, string> = {
 // a sensible opening offer, rounded to a clean number so it reads like a person
 function suggestedOfferCents(priceCents: number, kind: ListingKind): number | undefined {
   if (kind === "accommodation") return undefined;
+  // a service is booked at the advertised rate — knocking 10% off an hourly rate
+  // and rounding to $50 was suggesting $50 for a $60/hr job
+  if (kind === "service") return priceCents;
+  // items are negotiable, so open slightly under asking
   const target = Math.round((priceCents * 0.9) / 5000) * 5000;
   return Math.max(target, 500);
 }
 
 function dealNote(kind: ListingKind): string {
   if (kind === "accommodation") return "Keen to have a look through if it's still available.";
-  if (kind === "service") return "Here's what I need, let me know what you'd charge.";
+  if (kind === "service") return "Here's what I need — let me know if that time works.";
   return "Can pick up on campus this week.";
 }
 

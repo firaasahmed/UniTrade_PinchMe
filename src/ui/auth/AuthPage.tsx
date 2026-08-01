@@ -1,4 +1,7 @@
 import { useState } from "react";
+
+// seeded reviewer account — every seeded user shares this password
+const DEMO = { email: "admin@pinch.edu.au", password: "admin" };
 import { useSession } from "@/session/SessionContext";
 import { UniTradeLogo } from "@/ui/brand/UniTradeLogo";
 import { Button } from "@/components/ui/button";
@@ -18,8 +21,10 @@ export function AuthPage({
 }) {
   const { register, login } = useSession();
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // the demo account, filled in so a reviewer can sign straight in. registering
+  // starts blank, since those are real details
+  const [email, setEmail] = useState(mode === "login" ? DEMO.email : "");
+  const [password, setPassword] = useState(mode === "login" ? DEMO.password : "");
   const [confirm, setConfirm] = useState("");
   const [reveal, setReveal] = useState(false);
   const [busy, setBusy] = useState(false);

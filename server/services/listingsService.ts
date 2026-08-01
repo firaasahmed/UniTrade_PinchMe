@@ -1,6 +1,7 @@
 import { repo } from "../data/index.ts";
 import type { Listing, ListingRow, NewListing, ListingPatch, ListingFilter } from "../../src/types/Listing.ts";
 import type { PublicUser, User } from "../../src/types/User.ts";
+import { canListCategory } from "../../src/utils/listing-permissions.ts";
 import { NotFoundError, ForbiddenError } from "../lib/errors.ts";
 
 export function publicUser(sellerId: string): PublicUser {
@@ -40,7 +41,17 @@ export function getListingView(id: string): Listing {
   return enrich(row);
 }
 
+// the same rulebook the create form uses, enforced here because the form can be bypassed
+function assertMayList(user: User, category: string): void {
+  const right = canListCategory(
+    { role: user.role, orgType: user.orgType, verified: user.verified },
+    category,
+  );
+  if (!right.allowed) throw new ForbiddenError(right.reason);
+}
+
 export function createListing(user: User, input: NewListing): Listing {
+  assertMayList(user, input.category);
   return enrich(repo.createListing(user.id, input));
 }
 
@@ -48,6 +59,8 @@ export function updateListing(user: User, id: string, patch: ListingPatch): List
   const row = repo.getListing(id);
   if (!row) throw new NotFoundError("listing not found");
   assertOwner(user, row);
+  // changing category can't be a way around the create rule
+  if (patch.category !== undefined) assertMayList(user, patch.category);
   const updated = repo.updateListing(id, patch);
   if (!updated) throw new NotFoundError("listing not found");
   return enrich(updated);

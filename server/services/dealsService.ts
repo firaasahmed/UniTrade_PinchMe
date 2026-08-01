@@ -99,9 +99,10 @@ export function createDeal(user: User, input: NewDeal): DealView {
   }
 
   const isSeller = listing.sellerId === user.id;
-  // quotes come from the provider, offers and inspections come from the buyer
-  if (input.kind === "quote" && !isSeller) {
-    throw new ForbiddenError("only the provider can send a quote");
+  // a buyer books a session at the listed rate; the provider can also send a quote
+  // themselves, which is the same deal opened from the other side
+  if (input.kind === "quote" && !isSeller && !input.scheduledFor?.trim()) {
+    throw new ValidationError("pick a time for the session");
   }
   if (input.kind !== "quote" && isSeller) {
     throw new ForbiddenError("you can't do this on your own listing");
@@ -131,12 +132,14 @@ export function createDeal(user: User, input: NewDeal): DealView {
   supersedeLive(input.listingId, buyerId, listing.sellerId);
   const row = repo.createDeal(buyerId, listing.sellerId, user.id, input);
 
-  // a proposal opens (or continues) the conversation so it's visible in messages
+  // keeps the thread in the inbox with a readable preview. tagged with the deal so
+  // the thread renders the card instead of repeating it as text
   repo.createMessage({
     listingId: listing.id,
     senderId: user.id,
     recipientId: counterparty(row),
     body: describe(row, input.note),
+    dealId: row.id,
   });
 
   repo.createNotification({
@@ -251,6 +254,7 @@ function supersede(
     senderId: user.id,
     recipientId: counterparty(row),
     body: `${lead} — ${describe(row, note)}`,
+    dealId: row.id,
   });
   repo.createNotification({
     userId: counterparty(row),

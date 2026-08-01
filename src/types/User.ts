@@ -49,6 +49,9 @@ export type SessionUser = {
   email: string;
   role: UserRole;
   verified: boolean;
+  // agencies and university housing providers; absent for students. decides what
+  // this account is allowed to list
+  orgType?: "university" | "agency";
   universityId: string;
   university: string;
   location: string;

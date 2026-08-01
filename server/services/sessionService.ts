@@ -9,6 +9,7 @@ export function toSessionUser(user: User): SessionUser {
     email: user.email,
     role: user.role,
     verified: user.verified,
+    orgType: user.orgType,
     universityId: user.universityId,
     university: repo.getUniversity(user.universityId)?.name ?? "",
     location: user.location,

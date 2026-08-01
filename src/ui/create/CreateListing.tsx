@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { getListing, createListing, updateListing } from "@/api/listings-api";
 import {
@@ -16,6 +16,9 @@ import {
   listingToDraft,
 } from "@/utils/listing-draft";
 import { formatPrice } from "@/utils/format";
+import { kindsFor, needsPayoutAccount } from "@/utils/listing-permissions";
+import { getMyMerchant } from "@/api/merchants-api";
+import { canBePaid } from "@/types/Merchant";
 import { useSession } from "@/session/SessionContext";
 import { KINDS, ITEM_CATEGORIES, categoryIcon, categoryForKind, type ListingKind } from "@/utils/categories";
 import { ListingPreview } from "@/ui/create/ListingPreview";
@@ -49,6 +52,7 @@ import {
   Loader2,
   AlertCircle,
   Eye,
+  Landmark,
 } from "lucide-react";
 
 type Submit = { status: "idle" } | { status: "busy" } | { status: "error"; message: string };
@@ -116,9 +120,29 @@ export function CreateListing({ editId, presetKind }: { editId?: string; presetK
   const { state } = useSession();
   const sellerName = state.status === "signedIn" ? state.user.name : "You";
 
-  const [draft, setDraft] = useState<Draft>(() =>
-    presetKind ? { ...EMPTY_DRAFT, kind: presetKind, category: categoryForKind(presetKind) } : EMPTY_DRAFT,
-  );
+  // what this account may list, and whether it can be paid — both decide what the
+  // first step even offers
+  const lister =
+    state.status === "signedIn"
+      ? { role: state.user.role, orgType: state.user.orgType, verified: state.user.verified }
+      : { role: "student" as const, verified: false };
+  const allowedKinds = kindsFor(lister);
+  const [payoutReady, setPayoutReady] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getMyMerchant()
+      .then((m) => active && setPayoutReady(canBePaid(m.state)))
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const [draft, setDraft] = useState<Draft>(() => {
+    const wanted = presetKind && allowedKinds.includes(presetKind) ? presetKind : allowedKinds[0];
+    return wanted ? { ...EMPTY_DRAFT, kind: wanted, category: categoryForKind(wanted) } : EMPTY_DRAFT;
+  });
   const [step, setStep] = useState<StepId>("details");
   const [revealed, setRevealed] = useState<Set<StepId>>(new Set());
   // inspection has no required fields, so "valid" alone would tick it unseen
@@ -294,6 +318,8 @@ export function CreateListing({ editId, presetKind }: { editId?: string; presetK
               <StepDetails
                 draft={draft}
                 missing={missing}
+                allowed={allowedKinds}
+                payoutReady={payoutReady}
                 set={set}
                 onKind={chooseKind}
                 onCategory={(c) => set({ category: c })}
@@ -419,19 +445,25 @@ function StepDetails({
   set,
   onKind,
   onCategory,
+  allowed,
+  payoutReady,
 }: {
   draft: Draft;
   missing: Set<string>;
   set: (patch: Partial<Draft>) => void;
   onKind: (k: ListingKind) => void;
   onCategory: (c: string) => void;
+  allowed: ListingKind[];
+  payoutReady: boolean;
 }) {
+  const offered = KINDS.filter((k) => allowed.includes(k.value));
+  const needsPayout = needsPayoutAccount(draft.kind) && !payoutReady;
   return (
     <div className="space-y-4">
       {/* no FieldGroup — its padding cost 32px of width, which is the difference
           between "Accommodation" fitting a third of a phone and not */}
-      <div className="grid grid-cols-3 gap-2">
-        {KINDS.map((k) => (
+      <div className={cn("grid gap-2", offered.length === 3 ? "grid-cols-3" : "grid-cols-2")}>
+        {offered.map((k) => (
           <button
             key={k.value}
             type="button"
@@ -447,6 +479,23 @@ function StepDetails({
           </button>
         ))}
       </div>
+
+      {/* selling this means being paid for it, so say so before they write the listing */}
+      {needsPayout && (
+        <div className="flex gap-3 rounded-xl border border-gold/40 bg-gold/5 p-4">
+          <Landmark className="mt-0.5 size-5 shrink-0 text-gold-foreground" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium">You'll need a payout account first</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Nobody can pay you until Pinch has registered you as a merchant. Takes a minute — an
+              ABN and your bank details.
+            </p>
+            <Button asChild size="sm" variant="outline" className="mt-3">
+              <Link to="/payouts">Set that up</Link>
+            </Button>
+          </div>
+        </div>
+      )}
 
       {draft.kind === "item" && (
         <FieldGroup>

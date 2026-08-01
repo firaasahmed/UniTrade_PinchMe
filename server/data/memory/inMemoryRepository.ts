@@ -228,6 +228,7 @@ export function createInMemoryRepository(seed: SeedData, clock: Clock = systemCl
         senderId: input.senderId,
         recipientId: input.recipientId,
         body: input.body,
+        ...(input.dealId ? { dealId: input.dealId } : {}),
         createdAt: clock(),
         readAt: null,
       };

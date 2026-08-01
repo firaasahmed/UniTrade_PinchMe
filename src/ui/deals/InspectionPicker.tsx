@@ -89,9 +89,11 @@ export function InspectionPicker({
 
   // Compute header label for current week (e.g. "Aug 2 – Aug 8, 2026")
   const weekRangeLabel = (() => {
-    if (currentWeekDays.length === 0) return "";
-    const firstDate = toDate(currentWeekDays[0].date);
-    const lastDate = toDate(currentWeekDays[currentWeekDays.length - 1].date);
+    const firstDay = currentWeekDays[0];
+    const lastDay = currentWeekDays[currentWeekDays.length - 1];
+    if (!firstDay || !lastDay) return "";
+    const firstDate = toDate(firstDay.date);
+    const lastDate = toDate(lastDay.date);
     const m1 = firstDate.toLocaleDateString("en-US", { month: "short" });
     const m2 = lastDate.toLocaleDateString("en-US", { month: "short" });
     const year = firstDate.getFullYear();

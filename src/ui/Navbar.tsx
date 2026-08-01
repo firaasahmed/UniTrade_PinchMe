@@ -35,6 +35,7 @@ import {
   Sparkles,
   LayoutGrid,
   ChevronDown,
+  Landmark,
 } from "lucide-react";
 
 // ghost buttons sitting on the navy bar
@@ -338,6 +339,9 @@ function UserMenu({ user, onSignOut }: { user: SessionUser; onSignOut: () => voi
           <Link to="/watchlist"><Heart className="size-4" />Watchlist</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
+          <Link to="/payouts"><Landmark className="size-4" />Getting paid</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link to="/account"><User className="size-4" />Account</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -394,6 +398,7 @@ function MobileMenu({
               <MobileLink to="/messages" label="Messages" active={currentPath === "/messages"} onNavigate={() => setOpen(false)} />
               <MobileLink to="/notifications" label="Notifications" active={currentPath === "/notifications"} onNavigate={() => setOpen(false)} />
               <MobileLink to="/watchlist" label="Watchlist" active={currentPath === "/watchlist"} onNavigate={() => setOpen(false)} />
+              <MobileLink to="/payouts" label="Getting paid" active={currentPath === "/payouts"} onNavigate={() => setOpen(false)} />
               <MobileLink to="/account" label="Account" active={currentPath === "/account"} onNavigate={() => setOpen(false)} />
               <SheetClose asChild>
                 <button

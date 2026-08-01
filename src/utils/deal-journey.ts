@@ -32,15 +32,17 @@ export const JOURNEYS: Record<ListingKind, Journey> = {
   },
   service: {
     deal: "quote",
-    openedBy: "seller",
-    cta: "Request a quote",
-    ctaHint: "Tell them what you need and they'll send back a price and a time",
-    dialogTitle: "Send a quote",
-    amountLabel: "Quote total ($)",
-    timeLabel: "When",
-    acceptedLabel: "Quote accepted. Pay to book",
+    // the buyer books at the listed rate, the same shape as booking an inspection.
+    // the provider can still counter with a different price
+    openedBy: "buyer",
+    cta: "Book a session",
+    ctaHint: "Pick a time and they'll confirm or come back with a price",
+    dialogTitle: "Book a session",
+    amountLabel: "Agreed total ($)",
+    timeLabel: "When do you need them?",
+    acceptedLabel: "Session confirmed. Pay to book it in",
     paysOnAccept: true,
-    steps: ["Describe the job", "Provider sends a quote", "Pay securely", "Marked complete"],
+    steps: ["Pick a time", "Provider confirms", "Pay securely", "Marked complete"],
   },
   accommodation: {
     deal: "inspection",

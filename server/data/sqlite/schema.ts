@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS messages (
   senderId     TEXT NOT NULL REFERENCES users(id),
   recipientId  TEXT NOT NULL REFERENCES users(id),
   body         TEXT NOT NULL,
+  dealId       TEXT,
   createdAt    TEXT NOT NULL,
   readAt       TEXT
 );
