@@ -9,18 +9,19 @@ import type { MerchantRegistration } from "../src/types/Merchant.ts";
 //
 //   npx tsx scripts/register-demo-merchants.ts
 
-// fixed payout details per seller. deterministic, like the rest of the seed —
-// test BSB and account numbers, never real ones
-const PAYOUTS: Record<string, { bsb: string; account: string }> = {
-  usr14: { bsb: "062000", account: "10000014" },
-  usr15: { bsb: "062000", account: "10000015" },
-  usr16: { bsb: "062000", account: "10000016" },
-  usr17: { bsb: "062000", account: "10000017" },
-  usr20: { bsb: "062000", account: "10000020" },
-  // the two students who sell services, so the services flow is demoable
-  usr3: { bsb: "062000", account: "10000003" },
-  usr4: { bsb: "062000", account: "10000004" },
-};
+// everyone who actually has something listed — an unregistered seller can't be paid,
+// so their listings show as not taking bookings. account numbers are derived from the
+// user id so the same seed always produces the same details
+function sellersWithListings(): string[] {
+  const ids = new Set<string>();
+  for (const l of repo.getListings({})) ids.add(l.sellerId);
+  return [...ids].sort();
+}
+
+function payoutFor(userId: string): { bsb: string; account: string } {
+  const digits = userId.replace(/\D/g, "").padStart(6, "0");
+  return { bsb: "062000", account: `10${digits}` };
+}
 
 function splitName(name: string): { first: string; last: string } {
   const [first, ...rest] = name.trim().split(" ");
@@ -37,7 +38,8 @@ async function main(): Promise<void> {
   let created = 0;
   let skipped = 0;
 
-  for (const [userId, payout] of Object.entries(PAYOUTS)) {
+  for (const userId of sellersWithListings()) {
+    const payout = payoutFor(userId);
     const user = repo.getUser(userId);
     if (!user) {
       console.log(`${userId.padEnd(7)} —  no such user, skipped`);

@@ -107,11 +107,10 @@ function Loaded({ listing }: { listing: Listing }) {
   const me = state.status === "signedIn" ? state.user : null;
   const isOwner = me?.id === listing.sellerId;
   const available = listing.status === "active";
-  // items are handed over in person and take no payment, so they need no merchant.
-  // anything that ends in a charge needs the seller to be able to receive it
-  const sellerCanTransact = kind === "item" || listing.seller.payoutReady;
-
   const journey = journeyFor(kind);
+  // only a journey that ends in a charge needs the seller set up to receive it.
+  // an inspection moves no money, so a host needs no merchant to take bookings
+  const sellerCanTransact = !journey.paysOnAccept || listing.seller.payoutReady;
 
   function share() {
     void navigator.clipboard
